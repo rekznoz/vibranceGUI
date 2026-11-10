@@ -65,13 +65,10 @@ namespace vibrance.GUI.common
             var theme = new KryptonManager(components) { GlobalPaletteMode = PaletteMode.Microsoft365BlackDarkMode };
             var resources = new ComponentResourceManager(typeof(VibranceGUI));
             var trayMenu = new ContextMenuStrip(components);
-            var updatesItem = new ToolStripMenuItem();
             var exitItem = new ToolStripMenuItem();
-            BindTranslation("Updates", text => updatesItem.Text = text);
             BindTranslation("Exit", text => exitItem.Text = text);
-            updatesItem.Click += twitterToolStripTextBox_Click;
             exitItem.Click += exitToolStripMenuItem_Click;
-            trayMenu.Items.AddRange(new ToolStripItem[] { updatesItem, exitItem });
+            trayMenu.Items.Add(exitItem);
 
             notifyIcon = new NotifyIcon(components);
             notifyIcon.Icon = (Icon)resources.GetObject("notifyIcon.Icon");
@@ -276,27 +273,19 @@ namespace vibrance.GUI.common
             preferences.Controls.Add(checkBoxNeverChangeResolutions, 2, 0);
             dashboard.Controls.Add(CreateCard(preferences, new Padding(0, 12, 0, 0)), 0, 3);
 
-            var footer = CreateTable(5, 1);
+            var footer = CreateTable(3, 1);
             footer.Padding = new Padding(0, 9, 0, 0);
             footer.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-            foreach (int width in new[] { 60, 132, 95, 85 })
-                footer.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, width));
+            footer.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 60));
+            footer.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 132));
             footer.Controls.Add(CreateLabel("Desktop settings autosave", MutedColor), 0, 0);
             footer.Controls.Add(CreateLabel("Language", MutedColor), 1, 0);
             var languageSelector = CreateCombo("Language");
             languageSelector.Name = "languageSelector";
-            languageSelector.Margin = new Padding(0, 0, 8, 0);
             languageSelector.Items.AddRange(new object[] { "English", "Español", "Português" });
             languageSelector.SelectedIndex = UiLanguage.SelectedIndex;
             languageSelector.SelectedIndexChanged += languageSelector_SelectedIndexChanged;
             footer.Controls.Add(languageSelector, 2, 0);
-            var updates = CreateButton("Updates");
-            var donate = CreateButton("Donate");
-            updates.Margin = new Padding(0, 0, 8, 0);
-            updates.Click += twitterToolStripTextBox_Click;
-            donate.Click += buttonPaypal_Click;
-            footer.Controls.Add(updates, 3, 0);
-            footer.Controls.Add(donate, 4, 0);
             dashboard.Controls.Add(footer, 0, 4);
 
             Controls.Add(dashboard);
