@@ -8,7 +8,8 @@ namespace vibrance.GUI.common
         private static readonly Dictionary<string, string[]> Translations = new Dictionary<string, string[]>
         {
             { "Exit", new[] { "Salir", "Sair" } },
-            { "Desktop color and game profiles", new[] { "Color del escritorio y perfiles de juego", "Cor do ambiente de trabalho e perfis de jogo" } },
+            { "Updates", new[] { "Actualizaciones", "Atualizações" } },
+            { "Contact", new[] { "Contacto", "Contacto" } },
             { "Starting", new[] { "Iniciando", "A iniciar" } },
             { "●  Active", new[] { "●  Activo", "●  Ativo" } },
             { "NVAPI unloaded", new[] { "NVAPI desactivada", "NVAPI desativada" } },
