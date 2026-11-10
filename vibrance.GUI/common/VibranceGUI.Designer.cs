@@ -31,7 +31,7 @@ namespace vibrance.GUI.common
         private KryptonCheckBox checkBoxNeverChangeResolutions;
         private Label labelWindowsLevel;
         private KryptonTrackBar trackBarWindowsLevel;
-        private Label statusLabel;
+        private KryptonButton statusButton;
         private Label emptyProfilesLabel;
         private KryptonButton buttonProcessExplorer;
         private KryptonButton buttonAddProgram;
@@ -81,9 +81,7 @@ namespace vibrance.GUI.common
 
             backgroundWorker = new BackgroundWorker();
             components.Add(backgroundWorker);
-            backgroundWorker.WorkerReportsProgress = true;
             backgroundWorker.DoWork += backgroundWorker_DoWork;
-            backgroundWorker.ProgressChanged += backgroundWorker_ProgressChanged;
 
             settingsSaveTimer = new Timer(components);
             settingsSaveTimer.Interval = 5000;
@@ -122,10 +120,11 @@ namespace vibrance.GUI.common
             contact.Click += (sender, e) => OpenLink("https://steamcommunity.com/id/rekznoz/");
             header.Controls.Add(updates, 0, 0);
             header.Controls.Add(contact, 1, 0);
-            statusLabel = CreateLabel(UiLanguage.Translate(_statusText), MutedColor, 9F, FontStyle.Bold, translate: false);
-            statusLabel.BackColor = ButtonColor;
-            statusLabel.TextAlign = ContentAlignment.MiddleCenter;
-            header.Controls.Add(statusLabel, 3, 0);
+            statusButton = CreateDashboardButton();
+            statusButton.Text = UiLanguage.Translate(_statusText);
+            statusButton.Enabled = false;
+            statusButton.Click += statusButton_Click;
+            header.Controls.Add(statusButton, 3, 0);
             dashboard.Controls.Add(header, 0, 0);
 
             var desktop = CreateTable(2, 3);
