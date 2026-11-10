@@ -93,7 +93,8 @@ namespace vibrance.GUI.AMD
             if (_hook != null)
                 _hook.WinEventHookHandler -= OnWinEventHook;
             ResolutionHelper.RestoreProfileResolutions();
-            ApplyDesktopVibrance();
+            if (_vibranceInfo.shouldRun)
+                ApplyDesktopVibrance();
         }
 
         public void SetAffectPrimaryMonitorOnly(bool affectPrimaryMonitorOnly)
