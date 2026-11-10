@@ -21,6 +21,7 @@ namespace vibrance.GUI.common
         private static readonly Color WarningColor = Color.FromArgb(255, 156, 153);
 
         private IContainer components;
+        private KryptonCustomPaletteBase comboPalette;
         private Bitmap[] switchImages;
         private NotifyIcon notifyIcon;
         private BackgroundWorker backgroundWorker;
@@ -449,11 +450,21 @@ namespace vibrance.GUI.common
 
         private KryptonComboBox CreateCombo(string name)
         {
+            if (comboPalette == null)
+            {
+                comboPalette = new KryptonCustomPaletteBase(components)
+                {
+                    BasePalette = PaletteMode.Microsoft365BlackDarkMode,
+                    BaseRenderer = new ComboChevronRenderer()
+                };
+            }
             var combo = new KryptonComboBox
             {
                 Dock = DockStyle.Fill,
                 Margin = Padding.Empty,
-                DropDownStyle = ComboBoxStyle.DropDownList
+                DropDownStyle = ComboBoxStyle.DropDownList,
+                DropButtonStyle = ButtonStyle.LowProfile,
+                LocalCustomPalette = comboPalette
             };
             combo.StateCommon.ComboBox.Back.Color1 = InsetColor;
             combo.StateCommon.ComboBox.Content.Color1 = TextColor;
@@ -462,6 +473,37 @@ namespace vibrance.GUI.common
             combo.StateCommon.ComboBox.Border.Rounding = 6;
             BindTranslation(name, text => combo.AccessibleName = text);
             return combo;
+        }
+
+        private sealed class ComboChevronRenderer : RenderStandard
+        {
+            public override void DrawInputControlDropDownGlyph(RenderContext context, Rectangle bounds,
+                IPaletteContent palette, PaletteState state)
+            {
+                var graphics = context.Graphics;
+                float scale = graphics.DpiX / 96F;
+                float x = bounds.Left + bounds.Width / 2F;
+                float y = bounds.Top + bounds.Height / 2F;
+                Color color = state == PaletteState.Disabled ? MutedColor : AccentColor;
+                var smoothing = graphics.SmoothingMode;
+                try
+                {
+                    graphics.SmoothingMode = SmoothingMode.AntiAlias;
+                    using (var pen = new Pen(color, 1.5F * scale) { StartCap = LineCap.Round, EndCap = LineCap.Round, LineJoin = LineJoin.Round })
+                    {
+                        graphics.DrawLines(pen, new[]
+                        {
+                            new PointF(x - 3.5F * scale, y - 1.5F * scale),
+                            new PointF(x, y + 2F * scale),
+                            new PointF(x + 3.5F * scale, y - 1.5F * scale)
+                        });
+                    }
+                }
+                finally
+                {
+                    graphics.SmoothingMode = smoothing;
+                }
+            }
         }
     }
 }
