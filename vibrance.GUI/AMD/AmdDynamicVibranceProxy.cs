@@ -44,7 +44,8 @@ namespace vibrance.GUI.AMD
             catch (Exception ex)
             {
                 MessageBox.Show(ex.ToString());
-                DialogResult result = MessageBox.Show(NvidiaDynamicVibranceProxy.NvapiErrorInitFailed, "vibranceGUI Error",
+                DialogResult result = MessageBox.Show(UiLanguage.Translate(NvidiaDynamicVibranceProxy.NvapiErrorInitFailed),
+                    UiLanguage.Translate("vibranceGUI Error"),
                     MessageBoxButtons.OKCancel, MessageBoxIcon.Information);
                 if (result == DialogResult.OK)
                 {
