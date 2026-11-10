@@ -19,7 +19,10 @@ jobs:
           $msbuild = & $vswhere -latest -products '*' -requires Microsoft.Component.MSBuild -find 'MSBuild\Current\Bin\MSBuild.exe' | Select-Object -First 1
           if (!$msbuild) { throw 'MSBuild was not found.' }
           & $msbuild vibrance.GUI.sln /restore /nologo /m /p:Configuration=Release /p:Platform=x86
-          exit $LASTEXITCODE
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          if (!(Test-Path -LiteralPath 'vibrance.GUI/bin/x86/Release/Krypton.Toolkit.dll')) {
+            throw 'Krypton.Toolkit.dll is missing from the build output.'
+          }
       - name: Upload Release x86
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
