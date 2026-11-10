@@ -139,12 +139,6 @@
       <DependentUpon>VibranceGUI.cs</DependentUpon>
     </Compile>
     <Compile Include="NVIDIA\NvidiaVibranceValueWrapper.cs" />
-    <Compile Include="common\VibranceSettings.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="common\VibranceSettings.Designer.cs">
-      <DependentUpon>VibranceSettings.cs</DependentUpon>
-    </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="common\SettingsController.cs" />
@@ -155,9 +149,6 @@
     <EmbeddedResource Include="common\VibranceGUI.resx">
       <DependentUpon>VibranceGUI.cs</DependentUpon>
       <SubType>Designer</SubType>
-    </EmbeddedResource>
-    <EmbeddedResource Include="common\VibranceSettings.resx">
-      <DependentUpon>VibranceSettings.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
