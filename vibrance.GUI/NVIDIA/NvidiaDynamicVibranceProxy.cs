@@ -321,7 +321,8 @@ namespace vibrance.GUI.NVIDIA
             if (_hook != null)
                 _hook.WinEventHookHandler -= OnWinEventHook;
             ResolutionHelper.RestoreProfileResolutions();
-            ApplyDesktopVibrance();
+            if (_vibranceInfo.shouldRun)
+                ApplyDesktopVibrance();
         }
     }
 }
