@@ -18,7 +18,7 @@ jobs:
           $vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
           $msbuild = & $vswhere -latest -products '*' -requires Microsoft.Component.MSBuild -find 'MSBuild\Current\Bin\MSBuild.exe' | Select-Object -First 1
           if (!$msbuild) { throw 'MSBuild was not found.' }
-          & $msbuild vibrance.GUI.sln /nologo /m /p:Configuration=Release /p:Platform=x86
+          & $msbuild vibrance.GUI.sln /restore /nologo /m /p:Configuration=Release /p:Platform=x86
           exit $LASTEXITCODE
       - name: Upload Release x86
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
@@ -27,4 +27,5 @@ jobs:
           path: |
             vibrance.GUI/bin/x86/Release/vibrance.GUI.exe
             vibrance.GUI/bin/x86/Release/vibrance.GUI.exe.config
+            vibrance.GUI/bin/x86/Release/**/*.dll
           if-no-files-found: error
