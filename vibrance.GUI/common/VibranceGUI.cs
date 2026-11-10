@@ -34,6 +34,10 @@ namespace vibrance.GUI.common
         private bool _settingsDirty;
         private List<ApplicationSetting> _applicationSettings;
         private readonly List<ResolutionModeWrapper> _supportedResolutionList;
+        private readonly List<ResolutionModeWrapper> _profileResolutionModes = new List<ResolutionModeWrapper>();
+        private ResolutionModeWrapper _selectedProfileResolution;
+        private uint[] _profileRefreshRates = new uint[0];
+        private uint[] _profileScalingModes = new uint[0];
 
         public VibranceGUI(
             Func<List<ApplicationSetting>, Dictionary<string, List<ResolutionModeWrapper>>, IVibranceProxy> getProxy,
@@ -248,30 +252,14 @@ namespace vibrance.GUI.common
                 update();
             statusButton.Text = UiLanguage.Translate(_statusText);
             UpdateProfileEditorTitle();
-            RefreshProfileResolutionLabels();
+            if (_editingProfile != null)
+                RefreshProfileResolutionFilters(profileRefreshRateFilter.SelectedIndex, profileScalingFilter.SelectedIndex);
 
             foreach (var explorer in Application.OpenForms.OfType<ProcessExplorer>())
                 explorer.RefreshLanguage();
 
             if (!saved)
                 ShowSaveError();
-        }
-
-        private void RefreshProfileResolutionLabels()
-        {
-            int selectedIndex = profileResolution.SelectedIndex;
-            var modes = profileResolution.Items.Cast<object>().ToArray();
-            profileResolution.ComboBox.BeginUpdate();
-            try
-            {
-                profileResolution.Items.Clear();
-                profileResolution.Items.AddRange(modes);
-                profileResolution.SelectedIndex = selectedIndex;
-            }
-            finally
-            {
-                profileResolution.ComboBox.EndUpdate();
-            }
         }
 
         private void notifyIcon_MouseClick(object sender, MouseEventArgs e)
@@ -581,21 +569,70 @@ namespace vibrance.GUI.common
             profileVibranceSlider.Value = Math.Max(_minTrackBarValue, Math.Min(_maxTrackBarValue, level));
             ShowVibranceValue(profileVibranceValue, profileVibranceSlider);
 
-            profileResolution.Items.Clear();
+            _profileResolutionModes.Clear();
             if (_supportedResolutionList != null)
-                profileResolution.Items.AddRange(_supportedResolutionList.ToArray());
+                _profileResolutionModes.AddRange(_supportedResolutionList);
 
             var resolution = setting?.ResolutionSettings;
-            if (resolution != null && !profileResolution.Items.Contains(resolution))
-                profileResolution.Items.Add(resolution);
-            if (resolution != null)
-                profileResolution.SelectedItem = resolution;
-            else if (profileResolution.Items.Count > 0)
-                profileResolution.SelectedIndex = 0;
+            if (resolution != null && !_profileResolutionModes.Contains(resolution))
+                _profileResolutionModes.Add(resolution);
+            _selectedProfileResolution = resolution ?? _profileResolutionModes.FirstOrDefault();
+            _profileRefreshRates = _profileResolutionModes.Select(mode => mode.DmDisplayFrequency).Distinct().OrderBy(rate => rate).ToArray();
+            _profileScalingModes = _profileResolutionModes.Select(mode => mode.DmDisplayFixedOutput).Distinct().OrderBy(mode => mode).ToArray();
 
-            profileChangeResolution.Enabled = profileResolution.Items.Count > 0;
+            profileChangeResolution.Enabled = _profileResolutionModes.Count > 0;
             profileChangeResolution.Checked = profileChangeResolution.Enabled && (setting?.IsResolutionChangeNeeded ?? false);
-            profileChangeResolution_CheckedChanged(profileChangeResolution, EventArgs.Empty);
+            RefreshProfileResolutionFilters(0, 0);
+        }
+
+        private void RefreshProfileResolutionFilters(int refreshRateIndex, int scalingIndex)
+        {
+            profileRefreshRateFilter.Items.Clear();
+            profileRefreshRateFilter.Items.Add(UiLanguage.Translate("All refresh rates"));
+            profileRefreshRateFilter.Items.AddRange(_profileRefreshRates.Select(rate => rate + " Hz").ToArray());
+            profileRefreshRateFilter.SelectedIndex = refreshRateIndex;
+
+            profileScalingFilter.Items.Clear();
+            profileScalingFilter.Items.Add(UiLanguage.Translate("All scaling modes"));
+            profileScalingFilter.Items.AddRange(_profileScalingModes.Select(ResolutionModeWrapper.GetScalingLabel).ToArray());
+            profileScalingFilter.SelectedIndex = scalingIndex;
+            RefreshProfileResolutions();
+        }
+
+        private void profileResolutionFilter_Changed(object sender, EventArgs e)
+        {
+            RefreshProfileResolutions();
+        }
+
+        private void RefreshProfileResolutions()
+        {
+            int refreshRateIndex = profileRefreshRateFilter.SelectedIndex;
+            int scalingIndex = profileScalingFilter.SelectedIndex;
+            var modes = _profileResolutionModes.Where(mode =>
+                (refreshRateIndex <= 0 || mode.DmDisplayFrequency == _profileRefreshRates[refreshRateIndex - 1]) &&
+                (scalingIndex <= 0 || mode.DmDisplayFixedOutput == _profileScalingModes[scalingIndex - 1])).ToArray();
+
+            profileResolution.ComboBox.BeginUpdate();
+            profileResolution.SelectedIndexChanged -= profileResolution_SelectedIndexChanged;
+            try
+            {
+                profileResolution.Items.Clear();
+                profileResolution.Items.AddRange(modes);
+                profileResolution.SelectedIndex = Array.IndexOf(modes, _selectedProfileResolution);
+            }
+            finally
+            {
+                profileResolution.SelectedIndexChanged += profileResolution_SelectedIndexChanged;
+                profileResolution.ComboBox.EndUpdate();
+            }
+            UpdateProfileResolutionControls();
+        }
+
+        private void profileResolution_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (profileResolution.SelectedItem is ResolutionModeWrapper resolution)
+                _selectedProfileResolution = resolution;
+            UpdateProfileResolutionControls();
         }
 
         private void UpdateProfileEditorTitle()
@@ -611,16 +648,31 @@ namespace vibrance.GUI.common
 
         private void profileChangeResolution_CheckedChanged(object sender, EventArgs e)
         {
-            profileResolution.Enabled = profileChangeResolution.Checked;
+            UpdateProfileResolutionControls();
+        }
+
+        private void UpdateProfileResolutionControls()
+        {
+            bool enabled = profileChangeResolution.Checked;
+            bool hasMatches = profileResolution.Items.Count > 0;
+            profileRefreshRateFilter.Enabled = enabled;
+            profileScalingFilter.Enabled = enabled;
+            profileResolution.Enabled = enabled && hasMatches;
+
+            string hint = "Windowed or borderless mode only";
+            if (enabled && !hasMatches)
+                hint = "No matching resolutions";
+            else if (enabled && profileResolution.SelectedIndex < 0)
+                hint = "The selected resolution is hidden by the filters.";
+            profileResolutionHint.Text = UiLanguage.Translate(hint);
         }
 
         private void saveProfile_Click(object sender, EventArgs e)
         {
             CommitVibranceInput(profileVibranceValue, profileVibranceSlider);
             string path = (string)_editingProfile.Tag;
-            var resolution = (ResolutionModeWrapper)profileResolution.SelectedItem;
             var setting = new ApplicationSetting(_editingProfile.Text, path, profileVibranceSlider.Value,
-                resolution, profileChangeResolution.Checked);
+                _selectedProfileResolution, profileChangeResolution.Checked);
             int index = _applicationSettings.FindIndex(profile => profile.FileName == path);
             if (index < 0)
                 _applicationSettings.Add(setting);
