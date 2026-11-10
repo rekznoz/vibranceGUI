@@ -132,6 +132,7 @@ namespace vibrance.GUI.NVIDIA
         private static Dictionary<string, List<ResolutionModeWrapper>> _supportedResolutionModes;
         private WinEventHook _hook;
         private static int _gameDisplayHandle = -1;
+        private static bool _vibranceEnabled = true;
 
         public NvidiaDynamicVibranceProxy(List<ApplicationSetting> savedApplicationSettings, Dictionary<string, List<ResolutionModeWrapper>> supportedResolutionModes)
         {
@@ -214,6 +215,9 @@ namespace vibrance.GUI.NVIDIA
                 ? profile.ResolutionSettings : null;
             ResolutionHelper.ApplyProfileResolution(screen.DeviceName, resolution, _supportedResolutionModes);
 
+            if (!_vibranceEnabled)
+                return;
+
             int displayHandle = GetDisplayHandle(screen);
             if (_gameDisplayHandle != displayHandle)
                 SetDisplayVibrance(_gameDisplayHandle, _vibranceInfo.userVibranceSettingDefault);
@@ -247,7 +251,7 @@ namespace vibrance.GUI.NVIDIA
 
         private static void ApplyDesktopVibrance()
         {
-            int level = _vibranceInfo.userVibranceSettingDefault;
+            int level = _vibranceEnabled ? _vibranceInfo.userVibranceSettingDefault : NvapiDefaultLevel;
             if (_vibranceInfo.affectPrimaryMonitorOnly)
             {
                 int primary = GetDisplayHandle(Screen.PrimaryScreen);
@@ -270,6 +274,15 @@ namespace vibrance.GUI.NVIDIA
         {
             _vibranceInfo.shouldRun = shouldRun;
         }
+
+        public void SetVibranceEnabled(bool enabled)
+        {
+            _vibranceEnabled = enabled;
+            ApplyDesktopVibrance();
+            if (enabled)
+                _hook.RefreshForegroundWindow();
+        }
+
         public void SetNeverSwitchResolution(bool neverChangeResolution)
         {
             _vibranceInfo.neverChangeResolution = neverChangeResolution;
