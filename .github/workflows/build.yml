@@ -1,6 +1,14 @@
 name: Windows build
 
-on: [push, pull_request, workflow_dispatch]
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      single_exe:
+        description: Build the experimental single executable
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -14,16 +22,19 @@ jobs:
           persist-credentials: false
       - name: Build Release x86
         shell: pwsh
+        env:
+          SINGLE_EXE: ${{ inputs.single_exe || false }}
         run: |
           $vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
           $msbuild = & $vswhere -latest -products '*' -requires Microsoft.Component.MSBuild -find 'MSBuild\Current\Bin\MSBuild.exe' | Select-Object -First 1
           if (!$msbuild) { throw 'MSBuild was not found.' }
-          & $msbuild vibrance.GUI.sln /restore /nologo /m /p:Configuration=Release /p:Platform=x86
+          & $msbuild vibrance.GUI.sln /restore /nologo /m /p:Configuration=Release /p:Platform=x86 "/p:SingleExe=$env:SINGLE_EXE"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          if (!(Test-Path -LiteralPath 'vibrance.GUI/bin/x86/Release/Krypton.Toolkit.dll')) {
+          if ($env:SINGLE_EXE -ne 'true' -and !(Test-Path -LiteralPath 'vibrance.GUI/bin/x86/Release/Krypton.Toolkit.dll')) {
             throw 'Krypton.Toolkit.dll is missing from the build output.'
           }
       - name: Package Release x86
+        if: ${{ !inputs.single_exe }}
         shell: pwsh
         run: |
           $output = (Resolve-Path 'vibrance.GUI/bin/x86/Release').Path
@@ -40,8 +51,34 @@ jobs:
             Copy-Item -LiteralPath $_.FullName -Destination $destination
           }
       - name: Upload Release x86
+        if: ${{ !inputs.single_exe }}
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: vibranceGUI-Release-x86
           path: ${{ runner.temp }}/vibranceGUI-Release-x86/
+          if-no-files-found: error
+      - name: Verify single executable in isolation
+        if: ${{ inputs.single_exe }}
+        shell: pwsh
+        run: |
+          $package = Join-Path $env:RUNNER_TEMP 'vibranceGUI-SingleExe-x86'
+          New-Item -ItemType Directory -Path $package | Out-Null
+          $exe = Join-Path $package 'vibrance.GUI.exe'
+          Copy-Item -LiteralPath 'vibrance.GUI/bin/x86/SingleExe/vibrance.GUI.exe' -Destination $exe
+          $log = Join-Path $env:RUNNER_TEMP 'vibranceGUI-SingleExe-errors.log'
+          $probe = Start-Process -FilePath $exe -ArgumentList '--verify-bundle' -WorkingDirectory $package -WindowStyle Hidden -RedirectStandardError $log -PassThru
+          if (!$probe.WaitForExit(30000)) {
+            $probe.Kill()
+            throw 'The standalone executable did not finish its startup check.'
+          }
+          if ($probe.ExitCode -ne 0) {
+            Get-Content -LiteralPath $log
+            throw "Standalone startup check failed ($($probe.ExitCode))."
+          }
+      - name: Upload experimental single executable
+        if: ${{ inputs.single_exe }}
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: vibranceGUI-SingleExe-x86
+          path: ${{ runner.temp }}/vibranceGUI-SingleExe-x86/vibrance.GUI.exe
           if-no-files-found: error
