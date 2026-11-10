@@ -357,6 +357,12 @@ namespace vibrance.GUI.common
             button.StateCommon.Border.Width = 1;
             button.StateCommon.Content.ShortText.Color1 = primary ? PageColor : TextColor;
             button.StateCommon.Content.ShortText.Color2 = primary ? PageColor : TextColor;
+            button.OverrideFocus.Back.Color1 = background;
+            button.OverrideFocus.Back.Color2 = background;
+            button.OverrideFocus.Border.Color1 = AccentColor;
+            button.OverrideFocus.Border.Color2 = AccentColor;
+            button.OverrideDefault.Back.Color1 = background;
+            button.OverrideDefault.Back.Color2 = background;
             button.StateTracking.Back.Color1 = primary ? Color.FromArgb(197, 211, 255) : BorderColor;
             button.StateTracking.Back.Color2 = button.StateTracking.Back.Color1;
             button.StatePressed.Back.Color1 = primary ? Color.FromArgb(149, 171, 239) : CardColor;
