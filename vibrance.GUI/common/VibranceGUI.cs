@@ -5,15 +5,15 @@ using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Threading;
 using System.Windows.Forms;
+using Krypton.Toolkit;
 using Application = System.Windows.Forms.Application;
 using MessageBox = System.Windows.Forms.MessageBox;
 
 namespace vibrance.GUI.common
 {
-    public partial class VibranceGUI : Form
+    public partial class VibranceGUI : KryptonForm
     {
         private readonly int _defaultWindowsLevel;
         private readonly int _minTrackBarValue;
@@ -85,20 +85,6 @@ namespace vibrance.GUI.common
                 }
             }
             base.SetVisibleCore(value);
-        }
-
-        [DllImport("dwmapi.dll")]
-        private static extern int DwmSetWindowAttribute(IntPtr window, int attribute, ref int value, int size);
-
-        protected override void OnHandleCreated(EventArgs e)
-        {
-            base.OnHandleCreated(e);
-            if (!SystemInformation.HighContrast)
-            {
-                const int useImmersiveDarkMode = 20;
-                int enabled = 1;
-                DwmSetWindowAttribute(Handle, useImmersiveDarkMode, ref enabled, sizeof(int));
-            }
         }
 
         public void SetAllowVisible(bool value)
@@ -232,7 +218,7 @@ namespace vibrance.GUI.common
 
         private void languageSelector_SelectedIndexChanged(object sender, EventArgs e)
         {
-            int index = ((ComboBox)sender).SelectedIndex;
+            int index = ((KryptonComboBox)sender).SelectedIndex;
             if (index < 0)
                 return;
 
@@ -248,24 +234,6 @@ namespace vibrance.GUI.common
 
             if (!saved)
                 ShowSaveError();
-        }
-
-        private void dashboardCombo_DrawItem(object sender, DrawItemEventArgs e)
-        {
-            bool selected = (e.State & DrawItemState.Selected) != 0;
-            using (var background = new SolidBrush(!((Control)sender).Enabled ? InsetColor : selected ? BorderColor : ButtonColor))
-                e.Graphics.FillRectangle(background, e.Bounds);
-
-            if (e.Index >= 0)
-            {
-                var selector = (ComboBox)sender;
-                var bounds = Rectangle.Inflate(e.Bounds, -4, 0);
-                TextRenderer.DrawText(e.Graphics, selector.Items[e.Index].ToString(), selector.Font, bounds,
-                    selector.Enabled ? TextColor : MutedColor,
-                    TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix);
-            }
-
-            e.DrawFocusRectangle();
         }
 
         private void notifyIcon_MouseClick(object sender, MouseEventArgs e)
