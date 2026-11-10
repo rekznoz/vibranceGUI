@@ -9,15 +9,15 @@ namespace vibrance.GUI.common
 {
     partial class VibranceGUI
     {
-        private static readonly Color PageColor = Color.FromArgb(17, 20, 29);
-        private static readonly Color CardColor = Color.FromArgb(26, 31, 43);
-        private static readonly Color InsetColor = Color.FromArgb(20, 24, 34);
-        private static readonly Color TextColor = Color.FromArgb(240, 244, 249);
-        private static readonly Color MutedColor = Color.FromArgb(164, 178, 196);
+        internal static readonly Color PageColor = Color.FromArgb(17, 20, 29);
+        internal static readonly Color CardColor = Color.FromArgb(26, 31, 43);
+        internal static readonly Color InsetColor = Color.FromArgb(20, 24, 34);
+        internal static readonly Color TextColor = Color.FromArgb(240, 244, 249);
+        internal static readonly Color MutedColor = Color.FromArgb(164, 178, 196);
         private static readonly Color AccentColor = Color.FromArgb(175, 194, 255);
         private static readonly Color ActiveColor = Color.FromArgb(148, 225, 184);
-        private static readonly Color ButtonColor = Color.FromArgb(40, 48, 61);
-        private static readonly Color BorderColor = Color.FromArgb(54, 64, 85);
+        internal static readonly Color ButtonColor = Color.FromArgb(40, 48, 61);
+        internal static readonly Color BorderColor = Color.FromArgb(54, 64, 85);
         private static readonly Color WarningColor = Color.FromArgb(255, 156, 153);
 
         private IContainer components;
@@ -307,7 +307,7 @@ namespace vibrance.GUI.common
             ResumeLayout(true);
         }
 
-        private static TableLayoutPanel CreateTable(int columns, int rows)
+        internal static TableLayoutPanel CreateTable(int columns, int rows)
         {
             return new TableLayoutPanel
             {
@@ -318,7 +318,7 @@ namespace vibrance.GUI.common
             };
         }
 
-        private static KryptonGroup CreateCard(Control content, Padding margin)
+        internal static KryptonGroup CreateCard(Control content, Padding margin)
         {
             var card = new KryptonGroup { Dock = DockStyle.Fill, Margin = margin };
             card.StateCommon.Back.Color1 = CardColor;
@@ -352,6 +352,13 @@ namespace vibrance.GUI.common
 
         private KryptonButton CreateButton(string text, bool primary = false)
         {
+            var button = CreateDashboardButton(primary);
+            BindTranslation(text, translation => button.Text = translation);
+            return button;
+        }
+
+        internal static KryptonButton CreateDashboardButton(bool primary = false)
+        {
             var button = new KryptonButton { Dock = DockStyle.Fill, Margin = Padding.Empty };
             var background = primary ? AccentColor : ButtonColor;
             var border = primary ? AccentColor : BorderColor;
@@ -369,7 +376,6 @@ namespace vibrance.GUI.common
             button.StatePressed.Back.Color1 = primary ? Color.FromArgb(149, 171, 239) : CardColor;
             button.StatePressed.Back.Color2 = button.StatePressed.Back.Color1;
             button.StateDisabled.Content.ShortText.Color1 = MutedColor;
-            BindTranslation(text, translation => button.Text = translation);
             return button;
         }
 
