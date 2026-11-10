@@ -55,9 +55,8 @@
             // 
             this.button.Location = new System.Drawing.Point(13, 12);
             this.button.Name = "button";
-            this.button.Size = new System.Drawing.Size(119, 23);
+            this.button.Size = new System.Drawing.Size(140, 23);
             this.button.TabIndex = 1;
-            this.button.Text = "Reload Processes";
             this.button.UseVisualStyleBackColor = true;
             this.button.Click += new System.EventHandler(this.button_Click);
             // 
@@ -77,7 +76,6 @@
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "ProcessExplorer";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "vibranceGUI Process Explorer";
             this.ResumeLayout(false);
 
         }
