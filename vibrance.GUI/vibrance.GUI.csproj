@@ -34,6 +34,10 @@
   <ItemGroup>
     <PackageReference Include="Krypton.Toolkit" Version="105.26.7.201" />
   </ItemGroup>
+  <ItemGroup Condition="'$(SingleExe)' == 'true'">
+    <PackageReference Include="Fody" Version="6.9.3" PrivateAssets="all" />
+    <PackageReference Include="Costura.Fody" Version="6.2.0" PrivateAssets="all" />
+  </ItemGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>x86</PlatformTarget>
     <DebugSymbols>true</DebugSymbols>
@@ -79,6 +83,12 @@
     <PlatformTarget>x86</PlatformTarget>
     <ErrorReport>prompt</ErrorReport>
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(SingleExe)' == 'true'">
+    <OutputPath>bin\x86\SingleExe\</OutputPath>
+    <IntermediateOutputPath>obj\x86\SingleExe\</IntermediateOutputPath>
+    <DefineConstants>$(DefineConstants);SINGLE_EXE</DefineConstants>
+    <FodyGenerateXsd>false</FodyGenerateXsd>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
