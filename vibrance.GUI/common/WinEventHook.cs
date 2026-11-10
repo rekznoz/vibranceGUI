@@ -247,6 +247,16 @@ namespace vibrance.GUI.common
 
         static void WinEventProc(IntPtr hWinEventHook, uint eventType, IntPtr hwnd, int idObject, int idChild, uint dwEventThread, uint dwmsEventTime)
         {
+            GetInstance().DispatchWindow(hwnd);
+        }
+
+        internal void RefreshForegroundWindow()
+        {
+            DispatchWindow(GetForegroundWindow());
+        }
+
+        private void DispatchWindow(IntPtr hwnd)
+        {
             uint processId;
             GetWindowThreadProcessId(hwnd, out processId);
             int windowTextLength = GetWindowTextLength(hwnd);
@@ -265,7 +275,7 @@ namespace vibrance.GUI.common
                         ProcessName = p.ProcessName,
                         WindowText = sb.ToString()
                     };
-                    GetInstance().DispatchWinEventHookEvent(e);
+                    DispatchWinEventHookEvent(e);
                 }
             }
             catch (InvalidOperationException)
