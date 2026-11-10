@@ -241,7 +241,7 @@ namespace vibrance.GUI.common
             preferencesCard.Controls.AddRange(new Control[] { preferencesHeading, checkBoxAutostart,
                 checkBoxPrimaryMonitorOnly, checkBoxNeverChangeResolutions });
 
-            var footer = CreateLabel("Autosave on", 24, 562, MutedColor);
+            var footer = CreateLabel("Desktop settings autosave", 24, 562, MutedColor);
             var languageLabel = CreateLabel("Language", 433, 562, MutedColor);
             var languageSelector = new ComboBox
             {
