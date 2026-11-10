@@ -15,16 +15,15 @@ namespace vibrance.GUI.AMD
     {
         private readonly IAmdAdapter _amdAdapter;
         private List<ApplicationSetting> _applicationSettings;
-        private readonly Dictionary<string, Tuple<ResolutionModeWrapper, List<ResolutionModeWrapper>>> _windowsResolutionSettings;
+        private readonly Dictionary<string, List<ResolutionModeWrapper>> _supportedResolutionModes;
         private VibranceInfo _vibranceInfo;
         private WinEventHook _hook;
-        private static Screen _gameScreen;
 
-        public AmdDynamicVibranceProxy(IAmdAdapter amdAdapter, List<ApplicationSetting> applicationSettings, Dictionary<string, Tuple<ResolutionModeWrapper, List<ResolutionModeWrapper>>> windowsResolutionSettings)
+        public AmdDynamicVibranceProxy(IAmdAdapter amdAdapter, List<ApplicationSetting> applicationSettings, Dictionary<string, List<ResolutionModeWrapper>> supportedResolutionModes)
         {
             _amdAdapter = amdAdapter;
             _applicationSettings = applicationSettings;
-            _windowsResolutionSettings = windowsResolutionSettings;
+            _supportedResolutionModes = supportedResolutionModes;
 
             try
             {
@@ -87,6 +86,9 @@ namespace vibrance.GUI.AMD
 
         public void HandleDvcExit()
         {
+            if (_hook != null)
+                _hook.WinEventHookHandler -= OnWinEventHook;
+            ResolutionHelper.RestoreProfileResolutions();
             _amdAdapter.SetSaturationOnAllDisplays(_vibranceInfo.userVibranceSettingDefault);
         }
 
@@ -112,17 +114,10 @@ namespace vibrance.GUI.AMD
                 ApplicationSetting applicationSetting = _applicationSettings.FirstOrDefault(x => string.Equals(x.Name, e.ProcessName, StringComparison.OrdinalIgnoreCase));
                 if (applicationSetting != null)
                 {
-                    //test if a resolution change is needed
                     Screen screen = Screen.FromHandle(e.Handle);
-                    if (_vibranceInfo.neverChangeResolution == false && 
-                        applicationSetting.IsResolutionChangeNeeded && 
-                        IsResolutionChangeNeeded(screen, applicationSetting.ResolutionSettings) &&
-                        _windowsResolutionSettings.ContainsKey(screen.DeviceName) &&
-                        _windowsResolutionSettings[screen.DeviceName].Item2.Contains(applicationSetting.ResolutionSettings))
-                    {
-                        _gameScreen = screen;
-                        PerformResolutionChange(screen, applicationSetting.ResolutionSettings);
-                    }
+                    var resolution = !_vibranceInfo.neverChangeResolution && applicationSetting.IsResolutionChangeNeeded
+                        ? applicationSetting.ResolutionSettings : null;
+                    ResolutionHelper.ApplyProfileResolution(screen.DeviceName, resolution, _supportedResolutionModes);
 
                     _amdAdapter.SetSaturationOnAllDisplays(_vibranceInfo.userVibranceSettingDefault);
                     if (_vibranceInfo.affectPrimaryMonitorOnly)
@@ -140,34 +135,14 @@ namespace vibrance.GUI.AMD
                     if (GetForegroundWindow() != processHandle)
                         return;
 
-                    //test if a resolution change is needed
-                    Screen screen = Screen.FromHandle(processHandle);
-                    if (_vibranceInfo.neverChangeResolution == false && 
-                        _gameScreen != null && _gameScreen.Equals(screen) && 
-                        _windowsResolutionSettings.ContainsKey(screen.DeviceName) &&
-                        IsResolutionChangeNeeded(screen, _windowsResolutionSettings[screen.DeviceName].Item1))
-                    {
-                        PerformResolutionChange(screen, _windowsResolutionSettings[screen.DeviceName].Item1);
-                    }
-
+                    ResolutionHelper.RestoreProfileResolutions();
                     _amdAdapter.SetSaturationOnAllDisplays(_vibranceInfo.userVibranceSettingDefault);
                 }
             }
-        }
-
-        private static bool IsResolutionChangeNeeded(Screen screen, ResolutionModeWrapper resolutionSettings)
-        {
-            Devmode mode;
-            if (resolutionSettings != null && ResolutionHelper.GetCurrentResolutionSettings(out mode, screen.DeviceName) && !resolutionSettings.Equals(mode))
+            else
             {
-                return true;
+                ResolutionHelper.RestoreProfileResolutions();
             }
-            return false;
-        }
-
-        private static void PerformResolutionChange(Screen screen, ResolutionModeWrapper resolutionSettings)
-        {
-            ResolutionHelper.ChangeResolutionEx(resolutionSettings, screen.DeviceName);
         }
     }
 }
