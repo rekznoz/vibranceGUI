@@ -1,5 +1,4 @@
-﻿using System.ComponentModel;
-using System.Runtime.InteropServices;
+﻿using System.Runtime.InteropServices;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,8 +15,8 @@ namespace vibrance.GUI
 {
     static class Program
     {
-        private const string ErrorGraphicsAdapterUnknown = "Failed to determine your Graphic GraphicsAdapter type (NVIDIA/AMD). Make sure you have installed a proper GPU driver. Intel laptops are not supported as stated on the website. When installing your GPU driver did not work, please contact @juvlarN at twitter. Press Yes to open twitter in your browser now. Error: ";
-        private const string ErrorGraphicsAdapterAmbiguous = "Both NVIDIA and AMD graphic drivers have been found on your system. This can happen when you recently switched your graphic card and did not uninstall the old drivers. Make sure to uninstall unused graphic drivers to keep your system safe and stable. Use the program \"Display Driver Uninstaller\" to uninstall your old drivers!\n\nPress Yes to open \"Display Driver Uninstaller\" download website now.\nPress No to quit vibranceGUI.";
+        private const string ErrorGraphicsAdapterUnknown = "No supported AMD or NVIDIA graphics adapter with an available driver was detected. Press Yes to open the support profile in your browser.";
+        private const string ErrorGraphicsAdapterAmbiguous = "Windows reports both an AMD and an NVIDIA graphics adapter with available drivers. This version of vibranceGUI can use only one graphics provider at a time.";
         private const string MessageBoxCaption = "vibranceGUI Error";
 
         [STAThread]
@@ -70,21 +69,16 @@ namespace vibrance.GUI
             }
             else if (adapter == GraphicsAdapter.Unknown)
             {
-                string errorMessage = new Win32Exception(Marshal.GetLastWin32Error()).Message;
-                if (MessageBox.Show(ErrorGraphicsAdapterUnknown + errorMessage,
+                if (MessageBox.Show(ErrorGraphicsAdapterUnknown,
                     MessageBoxCaption, MessageBoxButtons.YesNo, MessageBoxIcon.Error) == DialogResult.Yes)
                 {
                     System.Diagnostics.Process.Start("https://twitter.com/juvlarN");
                 }
                 return;
             }
-            else if(adapter == GraphicsAdapter.Ambiguous)
+            else if (adapter == GraphicsAdapter.Ambiguous)
             {
-                if(MessageBox.Show(ErrorGraphicsAdapterAmbiguous, MessageBoxCaption, MessageBoxButtons.YesNo, 
-                    MessageBoxIcon.Error) == DialogResult.Yes)
-                {
-                    System.Diagnostics.Process.Start("http://www.guru3d.com/files-details/display-driver-uninstaller-download.html");
-                }
+                MessageBox.Show(ErrorGraphicsAdapterAmbiguous, MessageBoxCaption, MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
             if (args.Contains("-minimized"))
