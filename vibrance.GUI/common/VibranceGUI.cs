@@ -16,7 +16,6 @@ namespace vibrance.GUI.common
 {
     public partial class VibranceGUI : Form
     {
-        private readonly int _defaultWindowsLevel;
         private readonly int _minTrackBarValue;
         private readonly int _maxTrackBarValue;
         private readonly int _defaultIngameValue;
@@ -45,7 +44,6 @@ namespace vibrance.GUI.common
             int defaultIngameValue,
             Func<int, string> resolveLabelLevel)
         {
-            _defaultWindowsLevel = defaultWindowsLevel;
             _minTrackBarValue = minTrackBarValue;
             _maxTrackBarValue = maxTrackBarValue;
             _defaultIngameValue = defaultIngameValue;
@@ -56,6 +54,8 @@ namespace vibrance.GUI.common
 
             trackBarWindowsLevel.Minimum = minTrackBarValue;
             trackBarWindowsLevel.Maximum = maxTrackBarValue;
+            trackBarWindowsLevel.Value = defaultWindowsLevel;
+            labelWindowsLevel.Text = _resolveLabelLevel(defaultWindowsLevel);
             profileVibranceSlider.Maximum = maxTrackBarValue;
             profileVibranceSlider.Minimum = minTrackBarValue;
 
@@ -147,14 +147,6 @@ namespace vibrance.GUI.common
             });
         }
 
-        private void Form1_Shown(object sender, EventArgs e)
-        {
-            if (_v != null && _v.GetVibranceInfo().shouldRun)
-            {
-                SetGuiEnabledFlag(true);
-            }
-        }
-
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {
             if (_settingsDirty)
@@ -168,9 +160,9 @@ namespace vibrance.GUI.common
             this.Close();
         }
 
-        private void trackBarWindowsLevel_Scroll(object sender, EventArgs e)
+        private void trackBarWindowsLevel_ValueChanged(object sender, EventArgs e)
         {
-            _v.SetVibranceWindowsLevel(trackBarWindowsLevel.Value);
+            _v?.SetVibranceWindowsLevel(trackBarWindowsLevel.Value);
             labelWindowsLevel.Text = _resolveLabelLevel(trackBarWindowsLevel.Value);
             QueueSettingsSave();
         }
