@@ -20,7 +20,7 @@ namespace vibrance.GUI.common
             _resolveLabelLevel = resolveLabelLevel;
             this._v = v;
             labelIngameLevel.Text = _resolveLabelLevel(trackBarIngameLevel.Value);
-            this.labelTitle.Text += $@"""{sender.Text}""";
+            this.labelTitle.Text = string.Format(UiLanguage.Translate("Settings for “{0}”"), sender.Text);
             this.pictureBox.Image = this._sender.ListView.LargeImageList.Images[this._sender.ImageIndex];
             this.cBoxResolution.DataSource = supportedResolutionList;
             // If the setting is new, we don't need to set the progress bar value
