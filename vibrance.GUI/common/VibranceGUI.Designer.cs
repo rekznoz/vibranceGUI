@@ -47,8 +47,10 @@ namespace vibrance.GUI.common
             components = new Container();
             var resources = new ComponentResourceManager(typeof(VibranceGUI));
             var trayMenu = new ContextMenuStrip(components);
-            var updatesItem = new ToolStripMenuItem("Updates");
-            var exitItem = new ToolStripMenuItem("Exit");
+            var updatesItem = new ToolStripMenuItem();
+            var exitItem = new ToolStripMenuItem();
+            BindTranslation("Updates", text => updatesItem.Text = text);
+            BindTranslation("Exit", text => exitItem.Text = text);
             updatesItem.Click += twitterToolStripTextBox_Click;
             exitItem.Click += exitToolStripMenuItem_Click;
             trayMenu.Items.AddRange(new ToolStripItem[] { updatesItem, exitItem });
@@ -92,7 +94,7 @@ namespace vibrance.GUI.common
             mark.TextAlign = ContentAlignment.MiddleCenter;
             var title = CreateLabel("vibranceGUI", 80, 19, TextColor, 20F, FontStyle.Bold);
             var subtitle = CreateLabel("Desktop color and game profiles", 82, 54, MutedColor);
-            statusLabel = CreateLabel("Starting", 422, 29, MutedColor, 9F, FontStyle.Bold);
+            statusLabel = CreateLabel("Starting", 422, 29, MutedColor, 9F, FontStyle.Bold, translate: false);
             statusLabel.AutoSize = false;
             statusLabel.Size = new Size(130, 30);
             statusLabel.BackColor = CardColor;
@@ -101,14 +103,13 @@ namespace vibrance.GUI.common
             var desktopCard = new Panel { Location = new Point(24, 88), Size = new Size(528, 112), BackColor = CardColor, TabIndex = 0 };
             var desktopHeading = CreateLabel("Desktop vibrance", 16, 12, TextColor, 13F, FontStyle.Bold);
             var desktopDescription = CreateLabel("Color level when no game profile is active.", 17, 41, MutedColor);
-            labelWindowsLevel = CreateLabel("—", 413, 26, AccentColor, 26F, FontStyle.Bold);
+            labelWindowsLevel = CreateLabel("—", 413, 26, AccentColor, 26F, FontStyle.Bold, translate: false);
             labelWindowsLevel.AutoSize = false;
             labelWindowsLevel.Size = new Size(98, 56);
             labelWindowsLevel.TextAlign = ContentAlignment.MiddleRight;
             trackBarWindowsLevel = new TrackBar
             {
                 Name = "trackBarWindowsLevel",
-                AccessibleName = "Desktop vibrance",
                 Location = new Point(13, 65),
                 Size = new Size(392, 30),
                 AutoSize = false,
@@ -116,6 +117,7 @@ namespace vibrance.GUI.common
                 TickStyle = TickStyle.None,
                 BackColor = CardColor
             };
+            BindTranslation("Desktop vibrance", text => trackBarWindowsLevel.AccessibleName = text);
             trackBarWindowsLevel.Scroll += trackBarWindowsLevel_Scroll;
             desktopCard.Controls.AddRange(new Control[] { desktopHeading, desktopDescription, labelWindowsLevel, trackBarWindowsLevel });
 
@@ -134,21 +136,32 @@ namespace vibrance.GUI.common
             listApplications = new ListView
             {
                 Name = "listApplications",
-                AccessibleName = "Game profiles",
-                AccessibleDescription = "Select a game profile and choose Edit to change it.",
                 Location = new Point(16, 111),
                 Size = new Size(496, 111),
                 BackColor = InsetColor,
                 ForeColor = TextColor,
                 BorderStyle = BorderStyle.None,
+                View = View.Details,
+                HeaderStyle = ColumnHeaderStyle.None,
+                FullRowSelect = true,
+                OwnerDraw = true,
                 HideSelection = false,
                 TabIndex = 4,
                 UseCompatibleStateImageBehavior = false
             };
+            BindTranslation("Game profiles", text => listApplications.AccessibleName = text);
+            BindTranslation("Select a game profile and choose Edit to change it.", text => listApplications.AccessibleDescription = text);
+            var gameColumn = listApplications.Columns.Add("");
+            BindTranslation("Game profiles", text => gameColumn.Text = text);
+            listApplications.Resize += listApplications_Resize;
             listApplications.DoubleClick += listApplications_DoubleClick;
+            listApplications.DrawSubItem += listApplications_DrawSubItem;
             listApplications.SelectedIndexChanged += listApplications_SelectedIndexChanged;
-            emptyProfilesLabel = CreateLabel("No game profiles yet\r\nAdd a running game or browse for an executable.",
-                16, 111, MutedColor);
+            listApplications_Resize(listApplications, EventArgs.Empty);
+            emptyProfilesLabel = CreateLabel("", 16, 111, MutedColor, translate: false);
+            _languageBindings.Add(() => emptyProfilesLabel.Text = UiLanguage.Translate("No game profiles yet") +
+                Environment.NewLine + UiLanguage.Translate("Add a running game or browse for an executable."));
+            _languageBindings[_languageBindings.Count - 1]();
             emptyProfilesLabel.AutoSize = false;
             emptyProfilesLabel.Size = listApplications.Size;
             emptyProfilesLabel.TextAlign = ContentAlignment.MiddleCenter;
@@ -165,19 +178,35 @@ namespace vibrance.GUI.common
             checkBoxPrimaryMonitorOnly.CheckedChanged += checkBoxPrimaryMonitorOnly_CheckedChanged;
             checkBoxNeverChangeResolutions.CheckedChanged += checkBoxNeverChangeResolutions_CheckedChanged;
             var toolTip = new ToolTip(components);
-            toolTip.SetToolTip(checkBoxPrimaryMonitorOnly, "Limit vibrance changes to one monitor.");
-            toolTip.SetToolTip(checkBoxNeverChangeResolutions, "Prevent game profiles from changing the display resolution.");
+            BindTranslation("Limit vibrance changes to one monitor.", text => toolTip.SetToolTip(checkBoxPrimaryMonitorOnly, text));
+            BindTranslation("Prevent game profiles from changing the display resolution.", text => toolTip.SetToolTip(checkBoxNeverChangeResolutions, text));
             preferencesCard.Controls.AddRange(new Control[] { preferencesHeading, checkBoxAutostart,
                 checkBoxPrimaryMonitorOnly, checkBoxNeverChangeResolutions });
 
-            var footer = CreateLabel("Changes are saved automatically", 24, 562, MutedColor);
-            var updates = CreateButton("Updates", 386, 551, 80, 31, 3);
-            var donate = CreateButton("Donate", 472, 551, 80, 31, 4);
+            var footer = CreateLabel("Autosave on", 24, 562, MutedColor);
+            var languageLabel = CreateLabel("Language", 185, 562, MutedColor);
+            var languageSelector = new ComboBox
+            {
+                Name = "languageSelector",
+                Location = new Point(246, 555),
+                Size = new Size(122, 24),
+                DropDownStyle = ComboBoxStyle.DropDownList,
+                FlatStyle = FlatStyle.Flat,
+                BackColor = ButtonColor,
+                ForeColor = TextColor,
+                TabIndex = 3
+            };
+            BindTranslation("Language", text => languageSelector.AccessibleName = text);
+            languageSelector.Items.AddRange(new object[] { "English", "Español", "Português" });
+            languageSelector.SelectedIndex = UiLanguage.SelectedIndex;
+            languageSelector.SelectedIndexChanged += languageSelector_SelectedIndexChanged;
+            var updates = CreateButton("Updates", 386, 551, 80, 31, 4);
+            var donate = CreateButton("Donate", 472, 551, 80, 31, 5);
             updates.Click += twitterToolStripTextBox_Click;
             donate.Click += buttonPaypal_Click;
 
             Controls.AddRange(new Control[] { mark, title, subtitle, statusLabel, desktopCard, profilesCard,
-                preferencesCard, footer, updates, donate });
+                preferencesCard, footer, languageLabel, languageSelector, updates, donate });
             UpdateProfileActions();
             FormClosing += Form1_FormClosing;
             Load += Form1_Load;
@@ -187,9 +216,9 @@ namespace vibrance.GUI.common
             PerformLayout();
         }
 
-        private static Label CreateLabel(string text, int x, int y, Color color, float size = 9F, FontStyle style = FontStyle.Regular)
+        private Label CreateLabel(string text, int x, int y, Color color, float size = 9F, FontStyle style = FontStyle.Regular, bool translate = true)
         {
-            return new Label
+            var label = new Label
             {
                 Text = text,
                 Location = new Point(x, y),
@@ -197,13 +226,15 @@ namespace vibrance.GUI.common
                 ForeColor = color,
                 Font = new Font("Segoe UI", size, style)
             };
+            if (translate)
+                BindTranslation(text, translation => label.Text = translation);
+            return label;
         }
 
-        private static Button CreateButton(string text, int x, int y, int width, int height, int tabIndex, bool primary = false)
+        private Button CreateButton(string text, int x, int y, int width, int height, int tabIndex, bool primary = false)
         {
             var button = new Button
             {
-                Text = text,
                 Location = new Point(x, y),
                 Size = new Size(width, height),
                 TabIndex = tabIndex,
@@ -213,23 +244,25 @@ namespace vibrance.GUI.common
                 ForeColor = primary ? PageColor : TextColor,
                 Cursor = Cursors.Hand
             };
+            BindTranslation(text, translation => button.Text = translation);
             button.FlatAppearance.BorderColor = primary ? AccentColor : BorderColor;
             button.FlatAppearance.MouseOverBackColor = primary ? Color.FromArgb(197, 255, 161) : BorderColor;
             button.FlatAppearance.MouseDownBackColor = primary ? Color.FromArgb(149, 220, 101) : CardColor;
             return button;
         }
 
-        private static CheckBox CreateCheckBox(string text, int x, int y, int tabIndex)
+        private CheckBox CreateCheckBox(string text, int x, int y, int tabIndex)
         {
-            return new CheckBox
+            var checkBox = new CheckBox
             {
-                Text = text,
                 Location = new Point(x, y),
                 AutoSize = true,
                 TabIndex = tabIndex,
                 ForeColor = TextColor,
                 UseVisualStyleBackColor = false
             };
+            BindTranslation(text, translation => checkBox.Text = translation);
+            return checkBox;
         }
     }
 }
