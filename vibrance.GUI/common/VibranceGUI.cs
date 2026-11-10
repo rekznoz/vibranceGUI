@@ -94,11 +94,16 @@ namespace vibrance.GUI.common
         protected override void OnHandleCreated(EventArgs e)
         {
             base.OnHandleCreated(e);
+            ApplyDarkCaption(Handle);
+        }
+
+        internal static void ApplyDarkCaption(IntPtr handle)
+        {
             if (!SystemInformation.HighContrast)
             {
                 const int useImmersiveDarkMode = 20;
                 int enabled = 1;
-                DwmSetWindowAttribute(Handle, useImmersiveDarkMode, ref enabled, sizeof(int));
+                DwmSetWindowAttribute(handle, useImmersiveDarkMode, ref enabled, sizeof(int));
             }
         }
 
@@ -670,7 +675,7 @@ namespace vibrance.GUI.common
         private void buttonProcessExplorer_Click(object sender, EventArgs e)
         {
             ProcessExplorer ex = new ProcessExplorer(this);
-            ex.Show();
+            ex.Show(this);
         }
     }
 }
