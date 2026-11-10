@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -10,6 +11,8 @@ namespace vibrance.GUI.common
     class ResolutionHelper
     {
         private const int EnumCurrentSettings = -1;
+        private static readonly Dictionary<string, ResolutionModeWrapper> OriginalProfileModes =
+            new Dictionary<string, ResolutionModeWrapper>(StringComparer.OrdinalIgnoreCase);
 
         [DllImport("user32.dll")]
         public static extern bool EnumDisplaySettings(string deviceName, int modeNum, ref Devmode devMode);
@@ -30,15 +33,6 @@ namespace vibrance.GUI.common
             IntPtr hwnd,
             ChangeDisplaySettingsFlags dwflags,
             IntPtr lParam);
-
-        [DllImport("user32.dll")]
-        public static extern DispChange ChangeDisplaySettingsEx(
-            string lpszDeviceName, 
-            IntPtr lpDevMode, 
-            IntPtr hwnd, 
-            ChangeDisplaySettingsFlags dwflags, 
-            IntPtr lParam);
-
 
         public static bool GetCurrentResolutionSettings(out Devmode mode, string lpszDeviceName)
         {
@@ -98,30 +92,66 @@ namespace vibrance.GUI.common
             return false;
         }
 
-        public static bool ChangeResolutionEx(ResolutionModeWrapper resolutionMode, string lpszDeviceName)
+        public static void ApplyProfileResolution(string deviceName, ResolutionModeWrapper resolutionMode,
+            Dictionary<string, List<ResolutionModeWrapper>> supportedModes)
         {
-            Devmode mode = new Devmode();
-            if (GetCurrentResolutionSettings(out mode, lpszDeviceName))
+            List<ResolutionModeWrapper> deviceModes;
+            if (resolutionMode == null || !supportedModes.TryGetValue(deviceName, out deviceModes) ||
+                !deviceModes.Contains(resolutionMode))
             {
-                mode.dmPelsWidth = resolutionMode.DmPelsWidth;
-                mode.dmPelsHeight = resolutionMode.DmPelsHeight;
-                mode.dmBitsPerPel = resolutionMode.DmBitsPerPel;
-                mode.dmDisplayFrequency = resolutionMode.DmDisplayFrequency;
-                mode.dmDisplayFixedOutput = resolutionMode.DmDisplayFixedOutput;
+                RestoreProfileResolutions();
+                return;
+            }
 
+            RestoreProfileResolutions(deviceName);
+            Devmode currentMode;
+            if (!TryGetCurrentMode(deviceName, out currentMode) || resolutionMode.Equals(currentMode))
+                return;
 
-                DispChange returnValue = (DispChange)ChangeDisplaySettingsEx(lpszDeviceName, ref mode, IntPtr.Zero, (ChangeDisplaySettingsFlags.CdsUpdateregistry | ChangeDisplaySettingsFlags.CdsNoreset), IntPtr.Zero);
-                ChangeDisplaySettingsEx(null, IntPtr.Zero, (IntPtr)null, ChangeDisplaySettingsFlags.CdsNone, (IntPtr)null);
+            var originalMode = new ResolutionModeWrapper(currentMode);
+            if (TryApplyResolution(deviceName, resolutionMode, currentMode) && !OriginalProfileModes.ContainsKey(deviceName))
+                OriginalProfileModes.Add(deviceName, originalMode);
+        }
 
-                if (DispChange.DispChangeSuccessful == returnValue)
+        public static void RestoreProfileResolutions(string exceptDeviceName = null)
+        {
+            foreach (var entry in OriginalProfileModes.ToArray())
+            {
+                if (StringComparer.OrdinalIgnoreCase.Equals(entry.Key, exceptDeviceName))
+                    continue;
+
+                Devmode currentMode;
+                if (TryGetCurrentMode(entry.Key, out currentMode) &&
+                    (entry.Value.Equals(currentMode) || TryApplyResolution(entry.Key, entry.Value, currentMode)))
                 {
-                    return true;
-                }
-                else
-                {
-                    MessageBox.Show("Changing the resolution failed: " + Enum.GetName(typeof(DispChange), returnValue));
+                    OriginalProfileModes.Remove(entry.Key);
                 }
             }
+        }
+
+        private static bool TryGetCurrentMode(string deviceName, out Devmode mode)
+        {
+            if (GetCurrentResolutionSettings(out mode, deviceName))
+                return true;
+
+            Trace.TraceWarning("Could not read the current display mode for {0}.", deviceName);
+            return false;
+        }
+
+        private static bool TryApplyResolution(string deviceName, ResolutionModeWrapper resolutionMode, Devmode mode)
+        {
+            mode.dmPelsWidth = resolutionMode.DmPelsWidth;
+            mode.dmPelsHeight = resolutionMode.DmPelsHeight;
+            mode.dmBitsPerPel = resolutionMode.DmBitsPerPel;
+            mode.dmDisplayFrequency = resolutionMode.DmDisplayFrequency;
+            mode.dmDisplayFixedOutput = resolutionMode.DmDisplayFixedOutput;
+
+            DispChange result = ChangeDisplaySettingsEx(deviceName, ref mode, IntPtr.Zero,
+                ChangeDisplaySettingsFlags.CdsNone, IntPtr.Zero);
+            if (result == DispChange.DispChangeSuccessful)
+                return true;
+
+            Trace.TraceWarning("Changing the display mode for {0} to {1} failed: {2}.", deviceName, resolutionMode, result);
             return false;
         }
     }
