@@ -23,8 +23,9 @@ namespace vibrance.GUI.common
             { "Edit", new[] { "Editar", "Editar" } },
             { "Remove", new[] { "Eliminar", "Remover" } },
             { "Select a game profile and choose Edit to change it.", new[] { "Selecciona un perfil y pulsa Editar para modificarlo.", "Seleciona um perfil e escolhe Editar para o alterar." } },
-            { "No game profiles yet", new[] { "Aún no hay perfiles de juego", "Ainda não há perfis de jogo" } },
-            { "Add a running game or browse for an executable.", new[] { "Añade un juego activo o busca un ejecutable.", "Adiciona um jogo ativo ou procura um executável." } },
+            { "No game profiles yet\r\nAdd a running game or browse for an executable.",
+                new[] { "Aún no hay perfiles de juego\r\nAñade un juego activo o busca un ejecutable.",
+                    "Ainda não há perfis de jogo\r\nAdiciona um jogo ativo ou procura um executável." } },
             { "Preferences", new[] { "Preferencias", "Preferências" } },
             { "Start with Windows", new[] { "Iniciar con Windows", "Iniciar com o Windows" } },
             { "Primary monitor only", new[] { "Solo monitor principal", "Só o monitor principal" } },
@@ -60,23 +61,24 @@ namespace vibrance.GUI.common
             { "The NVIDIA system type could not be determined.", new[] { "No se pudo determinar el tipo de sistema NVIDIA.", "Não foi possível determinar o tipo de sistema NVIDIA." } },
             { "Changing the resolution failed: {0}", new[] { "No se pudo cambiar la resolución: {0}", "Não foi possível alterar a resolução: {0}" } },
         };
+        private static readonly string[] LanguageCodes = { "en", "es", "pt" };
 
         internal static int SelectedIndex { get; private set; }
 
         internal static void Load()
         {
             string code = new SettingsController().ReadLanguage();
-            SelectedIndex = string.Equals(code, "es", StringComparison.OrdinalIgnoreCase) ? 1
-                : string.Equals(code, "pt", StringComparison.OrdinalIgnoreCase) ? 2 : 0;
+            SelectedIndex = Math.Max(0, Array.FindIndex(LanguageCodes, candidate =>
+                string.Equals(code, candidate, StringComparison.OrdinalIgnoreCase)));
         }
 
         internal static bool Select(int index)
         {
-            if (index < 0 || index > 2)
+            if (index < 0 || index >= LanguageCodes.Length)
                 return false;
 
             SelectedIndex = index;
-            return new SettingsController().SaveLanguage(new[] { "en", "es", "pt" }[index]);
+            return new SettingsController().SaveLanguage(LanguageCodes[index]);
         }
 
         internal static string Translate(string english)
