@@ -392,7 +392,7 @@ namespace vibrance.GUI.common
                 Maximum = 63,
                 TickStyle = TickStyle.None,
                 TrackBarSize = PaletteTrackBarSize.Medium,
-                BackColor = CardColor
+                DrawBackground = false
             };
             slider.StateCommon.Track.Color1 = BorderColor;
             slider.StateCommon.Track.Color2 = BorderColor;
