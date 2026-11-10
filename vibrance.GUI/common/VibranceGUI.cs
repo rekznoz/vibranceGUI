@@ -209,7 +209,7 @@ namespace vibrance.GUI.common
             if (e.ProgressPercentage == 1)
             {
                 SetStatusText("●  Active");
-                this.statusLabel.ForeColor = AccentColor;
+                this.statusLabel.ForeColor = ActiveColor;
             }
             else if (e.ProgressPercentage == 2)
             {
