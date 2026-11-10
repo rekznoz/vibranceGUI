@@ -1,90 +1,171 @@
-﻿namespace vibrance.GUI.common
+using System;
+using System.ComponentModel;
+using System.Drawing;
+using System.Windows.Forms;
+using Krypton.Toolkit;
+using static vibrance.GUI.common.VibranceGUI;
+
+namespace vibrance.GUI.common
 {
     partial class ProcessExplorer
     {
-        /// <summary>
-        /// Required designer variable.
-        /// </summary>
-        private System.ComponentModel.IContainer components = null;
+        private IContainer components;
+        private KryptonDataGridView processGrid;
+        private KryptonButton reloadButton;
+        private KryptonButton addButton;
+        private Label heading;
+        private Label description;
+        private Label processStatus;
+        private BackgroundWorker backgroundWorker;
 
-        /// <summary>
-        /// Clean up any resources being used.
-        /// </summary>
-        /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
         protected override void Dispose(bool disposing)
         {
-            if (disposing && (components != null))
+            if (disposing)
             {
-                components.Dispose();
+                ClearProcesses();
+                components?.Dispose();
             }
             base.Dispose(disposing);
         }
 
-        #region Windows Form Designer generated code
-
-        /// <summary>
-        /// Required method for Designer support - do not modify
-        /// the contents of this method with the code editor.
-        /// </summary>
         private void InitializeComponent()
         {
-            this.components = new System.ComponentModel.Container();
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(ProcessExplorer));
-            this.listView = new System.Windows.Forms.ListView();
-            this.iconList = new System.Windows.Forms.ImageList(this.components);
-            this.button = new System.Windows.Forms.Button();
-            this.backgroundWorker = new System.ComponentModel.BackgroundWorker();
-            this.SuspendLayout();
-            // 
-            // listView
-            // 
-            this.listView.Location = new System.Drawing.Point(12, 41);
-            this.listView.Name = "listView";
-            this.listView.Size = new System.Drawing.Size(615, 236);
-            this.listView.TabIndex = 0;
-            this.listView.UseCompatibleStateImageBehavior = false;
-            this.listView.DoubleClick += new System.EventHandler(this.listView_DoubleClick);
-            // 
-            // iconList
-            // 
-            this.iconList.ColorDepth = System.Windows.Forms.ColorDepth.Depth32Bit;
-            this.iconList.ImageSize = new System.Drawing.Size(16, 16);
-            this.iconList.TransparentColor = System.Drawing.Color.Transparent;
-            // 
-            // button
-            // 
-            this.button.Location = new System.Drawing.Point(13, 12);
-            this.button.Name = "button";
-            this.button.Size = new System.Drawing.Size(140, 23);
-            this.button.TabIndex = 1;
-            this.button.UseVisualStyleBackColor = true;
-            this.button.Click += new System.EventHandler(this.button_Click);
-            // 
-            // backgroundWorker
-            // 
-            this.backgroundWorker.DoWork += new System.ComponentModel.DoWorkEventHandler(this.backgroundWorker_DoWork);
-            this.backgroundWorker.ProgressChanged += new System.ComponentModel.ProgressChangedEventHandler(this.backgroundWorker_ProgressChanged);
-            // 
-            // ProcessExplorer
-            // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(639, 289);
-            this.Controls.Add(this.button);
-            this.Controls.Add(this.listView);
-            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
-            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
-            this.Name = "ProcessExplorer";
-            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.ResumeLayout(false);
+            components = new Container();
+            var resources = new ComponentResourceManager(typeof(ProcessExplorer));
+            backgroundWorker = new BackgroundWorker { WorkerReportsProgress = true };
+            components.Add(backgroundWorker);
+            backgroundWorker.DoWork += backgroundWorker_DoWork;
+            backgroundWorker.ProgressChanged += backgroundWorker_ProgressChanged;
+            backgroundWorker.RunWorkerCompleted += backgroundWorker_RunWorkerCompleted;
 
+            SuspendLayout();
+            AutoScaleMode = AutoScaleMode.Font;
+            AutoScaleDimensions = new SizeF(7F, 15F);
+            Font = new Font("Segoe UI", 9F);
+            BackColor = PageColor;
+            ForeColor = TextColor;
+            ClientSize = new Size(760, 448);
+            MinimumSize = new Size(590, 320);
+            StartPosition = FormStartPosition.CenterParent;
+            ShowInTaskbar = false;
+            Icon = (Icon)resources.GetObject("$this.Icon");
+            Name = "ProcessExplorer";
+
+            var layout = CreateTable(1, 4);
+            layout.Padding = new Padding(22, 16, 22, 14);
+            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 33));
+            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 32));
+            layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 47));
+
+            heading = new Label
+            {
+                Dock = DockStyle.Fill,
+                Margin = Padding.Empty,
+                ForeColor = TextColor,
+                Font = new Font("Segoe UI", 17F, FontStyle.Bold),
+                TextAlign = ContentAlignment.MiddleLeft
+            };
+            description = new Label
+            {
+                Dock = DockStyle.Fill,
+                Margin = Padding.Empty,
+                ForeColor = MutedColor,
+                AutoEllipsis = true,
+                TextAlign = ContentAlignment.TopLeft
+            };
+            layout.Controls.Add(heading, 0, 0);
+            layout.Controls.Add(description, 0, 1);
+
+            processGrid = new KryptonDataGridView
+            {
+                Dock = DockStyle.Fill,
+                Margin = Padding.Empty,
+                ReadOnly = true,
+                AllowUserToAddRows = false,
+                AllowUserToDeleteRows = false,
+                AllowUserToResizeRows = false,
+                RowHeadersVisible = false,
+                MultiSelect = false,
+                SelectionMode = DataGridViewSelectionMode.FullRowSelect,
+                ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing,
+                ColumnHeadersHeight = 33,
+                ScrollBars = ScrollBars.Vertical,
+                ShowCellToolTips = true,
+                BorderStyle = BorderStyle.None,
+                CellBorderStyle = DataGridViewCellBorderStyle.None
+            };
+            processGrid.RowTemplate.Height = 35;
+            processGrid.StateCommon.Background.Color1 = InsetColor;
+            processGrid.StateCommon.DataCell.Back.Color1 = InsetColor;
+            processGrid.StateCommon.DataCell.Back.Color2 = InsetColor;
+            processGrid.StateCommon.DataCell.Border.Color1 = CardColor;
+            processGrid.StateCommon.DataCell.Border.Color2 = CardColor;
+            processGrid.StateCommon.DataCell.Content.Color1 = TextColor;
+            processGrid.StateCommon.HeaderColumn.Back.Color1 = CardColor;
+            processGrid.StateCommon.HeaderColumn.Back.Color2 = CardColor;
+            processGrid.StateCommon.HeaderColumn.Border.Color1 = BorderColor;
+            processGrid.StateCommon.HeaderColumn.Border.Color2 = BorderColor;
+            processGrid.StateCommon.HeaderColumn.Content.Color1 = MutedColor;
+            processGrid.StateSelected.DataCell.Back.Color1 = ButtonColor;
+            processGrid.StateSelected.DataCell.Back.Color2 = ButtonColor;
+            processGrid.StateSelected.DataCell.Content.Color1 = TextColor;
+
+            var programs = new DataGridViewTextBoxColumn
+            {
+                AutoSizeMode = DataGridViewAutoSizeColumnMode.None,
+                Width = 198,
+                MinimumWidth = 116,
+                SortMode = DataGridViewColumnSortMode.NotSortable
+            };
+            programs.DefaultCellStyle.Padding = new Padding(29, 0, 0, 0);
+            var paths = new DataGridViewTextBoxColumn
+            {
+                AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill,
+                MinimumWidth = 180,
+                SortMode = DataGridViewColumnSortMode.NotSortable
+            };
+            processGrid.Columns.AddRange(programs, paths);
+            processGrid.CellPainting += processGrid_CellPainting;
+            processGrid.CellDoubleClick += processGrid_CellDoubleClick;
+            processGrid.SelectionChanged += processGrid_SelectionChanged;
+
+            var tableHost = new Panel { Dock = DockStyle.Fill, Padding = new Padding(5) };
+            tableHost.Controls.Add(processGrid);
+            layout.Controls.Add(CreateCard(tableHost, Padding.Empty), 0, 2);
+
+            var footer = CreateTable(3, 1);
+            footer.Padding = new Padding(0, 10, 0, 0);
+            footer.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            footer.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 146));
+            footer.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 156));
+            processStatus = new Label
+            {
+                Dock = DockStyle.Fill,
+                Margin = Padding.Empty,
+                ForeColor = MutedColor,
+                AutoEllipsis = true,
+                TextAlign = ContentAlignment.MiddleLeft
+            };
+            reloadButton = CreateDashboardButton();
+            reloadButton.Margin = new Padding(0, 0, 8, 0);
+            reloadButton.Click += reloadButton_Click;
+            addButton = CreateDashboardButton(primary: true);
+            addButton.OverrideDefault.Back.Color1 = addButton.StateCommon.Back.Color1;
+            addButton.OverrideDefault.Back.Color2 = addButton.StateCommon.Back.Color2;
+            addButton.OverrideDefault.Border.Color1 = addButton.StateCommon.Border.Color1;
+            addButton.OverrideDefault.Border.Color2 = addButton.StateCommon.Border.Color2;
+            addButton.OverrideDefault.Content.ShortText.Color1 = addButton.StateCommon.Content.ShortText.Color1;
+            addButton.OverrideDefault.Content.ShortText.Color2 = addButton.StateCommon.Content.ShortText.Color2;
+            addButton.Enabled = false;
+            addButton.Click += addButton_Click;
+            footer.Controls.Add(processStatus, 0, 0);
+            footer.Controls.Add(reloadButton, 1, 0);
+            footer.Controls.Add(addButton, 2, 0);
+            layout.Controls.Add(footer, 0, 3);
+            Controls.Add(layout);
+            AcceptButton = addButton;
+            ResumeLayout(true);
         }
-
-        #endregion
-
-        private System.Windows.Forms.ListView listView;
-        private System.Windows.Forms.ImageList iconList;
-        private System.Windows.Forms.Button button;
-        private System.ComponentModel.BackgroundWorker backgroundWorker;
     }
 }
