@@ -1,6 +1,6 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -23,7 +23,7 @@ namespace vibrance.GUI.common
            string lpFileName);
 
 
-        [DllImport("kernel32.dll", EntryPoint = "WritePrivateProfileString")]
+        [DllImport("kernel32.dll", CharSet = CharSet.Unicode)]
         private static extern bool WritePrivateProfileString(string lpAppName,
           string lpKeyName, string lpString, string lpFileName);
 
@@ -39,58 +39,60 @@ namespace vibrance.GUI.common
 
         public bool SetVibranceSettings(string windowsLevel, string affectPrimaryMonitorOnly, string neverSwitchResolution, List<ApplicationSetting> applicationSettings)
         {
-            if (!PrepareFile())
-            {
-                return false;
-            }
-
-            WritePrivateProfileString(SzSectionName, SzKeyNameInactive, windowsLevel, _fileName);
-            WritePrivateProfileString(SzSectionName, SzKeyNameAffectPrimaryMonitorOnly, affectPrimaryMonitorOnly, _fileName);
-            WritePrivateProfileString(SzSectionName, SzKeyNameNeverSwitchResolution, neverSwitchResolution, _fileName);
-
+            string temporaryFile = _fileNameApplicationSettings + "." + Guid.NewGuid().ToString("N") + ".tmp";
             try
             {
-                var writer = System.Xml.XmlWriter.Create(_fileNameApplicationSettings);
-                if (writer.WriteState != WriteState.Start)
-                    return false;
+                Directory.CreateDirectory(Path.GetDirectoryName(_fileNameApplicationSettings));
                 XmlSerializer serializer = new XmlSerializer(typeof(List<ApplicationSetting>));
-                serializer.Serialize(writer, applicationSettings);
-                writer.Flush();
-                writer.Close();
+                using (var writer = XmlWriter.Create(temporaryFile))
+                {
+                    serializer.Serialize(writer, applicationSettings);
+                }
+
+                if (!WritePrivateProfileString(SzSectionName, SzKeyNameInactive, windowsLevel, _fileName) ||
+                    !WritePrivateProfileString(SzSectionName, SzKeyNameAffectPrimaryMonitorOnly, affectPrimaryMonitorOnly, _fileName) ||
+                    !WritePrivateProfileString(SzSectionName, SzKeyNameNeverSwitchResolution, neverSwitchResolution, _fileName))
+                {
+                    return false;
+                }
+
+                if (File.Exists(_fileNameApplicationSettings))
+                    File.Replace(temporaryFile, _fileNameApplicationSettings, null);
+                else
+                    File.Move(temporaryFile, _fileNameApplicationSettings);
+
+                return true;
             }
-            catch (Exception)
+            catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is InvalidOperationException)
             {
+                Trace.TraceError("Could not save vibranceGUI settings: {0}", ex);
                 return false;
             }
-
-            return (Marshal.GetLastWin32Error() == 0);
+            finally
+            {
+                try
+                {
+                    File.Delete(temporaryFile);
+                }
+                catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
+                {
+                    Trace.TraceWarning("Could not delete temporary settings file: {0}", ex);
+                }
+            }
         }
 
         public bool SetVibranceSetting(string szKeyName, string value)
         {
-            if (!PrepareFile())
+            try
             {
+                Directory.CreateDirectory(Path.GetDirectoryName(_fileName));
+                return WritePrivateProfileString(SzSectionName, szKeyName, value, _fileName);
+            }
+            catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
+            {
+                Trace.TraceError("Could not save vibranceGUI setting: {0}", ex);
                 return false;
             }
-
-            WritePrivateProfileString(SzSectionName, szKeyName, value.ToString(), _fileName);
-
-            return (Marshal.GetLastWin32Error() == 0);
-        }
-
-        private bool PrepareFile()
-        {
-            if (!IsFileExisting(_fileName))
-            {
-                StreamWriter sw = new StreamWriter(_fileName);
-                sw.Close();
-                if (!IsFileExisting(_fileName))
-                {
-                    return false;
-                }
-            }
-
-            return true;
         }
 
         public void ReadVibranceSettings(GraphicsAdapter graphicsAdapter, out int vibranceWindowsLevel, out bool affectPrimaryMonitorOnly, out bool neverSwitchResolution, out List<ApplicationSetting> applicationSettings)
@@ -172,10 +174,11 @@ namespace vibrance.GUI.common
 
             try
             {
-                var reader = System.Xml.XmlReader.Create(_fileNameApplicationSettings);
                 XmlSerializer serializer = new XmlSerializer(typeof(List<ApplicationSetting>));
-                applicationSettings = (List<ApplicationSetting>)serializer.Deserialize(reader);
-                reader.Close();
+                using (var reader = XmlReader.Create(_fileNameApplicationSettings))
+                {
+                    applicationSettings = (List<ApplicationSetting>)serializer.Deserialize(reader);
+                }
             }
             catch (Exception)
             {
