@@ -36,6 +36,18 @@ msbuild vibrance.GUI.sln /restore /m /p:Configuration=Release /p:Platform=x86
 
 El resultado local está en `vibrance.GUI\bin\x86\Release\`. La DLL de NVIDIA requiere un proceso x86, también en Windows de 64 bits.
 
+### EXE único experimental
+
+En **Actions → Windows build → Run workflow**, activa **Build the experimental single executable**. La ejecución comprueba que el EXE puede cargar Krypton desde una carpeta vacía y publica **vibranceGUI-SingleExe-x86**. Extrae el ejecutable del artefacto. Requiere que .NET Framework 4.8 esté instalado en Windows.
+
+Para compilar la misma variante en una consola de desarrollador de Visual Studio:
+
+```bat
+msbuild vibrance.GUI.sln /restore /m /p:Configuration=Release /p:Platform=x86 /p:SingleExe=true
+```
+
+El ejecutable experimental está en `vibrance.GUI\bin\x86\SingleExe\vibrance.GUI.exe`. Costura incrusta las dependencias gestionadas. La comprobación de arranque valida la carga de la interfaz. La aplicación de perfiles requiere una prueba con el controlador gráfico y el juego.
+
 ### Procedencia de la DLL de NVIDIA
 
 El ejecutable incorpora `vibrance.GUI/NVIDIA/vibranceDLL.dll`. El commit `5ee9adef0e8b04efbb1a00f53f231145cdfedefd` introdujo los bytes actuales y registra el uso de `/MT` para enlazar estáticamente el runtime de C++. El autor publicó el proyecto C/C++ por separado, con instrucciones para compilar en x86 y Unicode. [Código fuente de vibranceDLL](https://github.com/juv/vibranceDLL)
