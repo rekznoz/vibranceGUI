@@ -125,44 +125,31 @@ namespace vibrance.GUI.common
 
         private void backgroundWorker_DoWork(object sender, DoWorkEventArgs e)
         {
-            int vibranceWindowsLevel = _defaultWindowsLevel;
-            bool affectPrimaryMonitorOnly = false;
-            bool neverSwitchResolution = false;
-
             while (!this.IsHandleCreated)
             {
                 Thread.Sleep(500);
             }
 
-            if (this.InvokeRequired)
+            this.Invoke((MethodInvoker)delegate
             {
-                this.Invoke((MethodInvoker)delegate
-                {
-                    ReadVibranceSettings(out vibranceWindowsLevel, out affectPrimaryMonitorOnly, out neverSwitchResolution);
-                });
-            }
-            else
-            {
-                ReadVibranceSettings(out vibranceWindowsLevel, out affectPrimaryMonitorOnly, out neverSwitchResolution);
-            }
+                ReadVibranceSettings(out int vibranceWindowsLevel, out bool affectPrimaryMonitorOnly, out bool neverSwitchResolution);
 
-            if (_v.GetVibranceInfo().isInitialized)
-            {
-                backgroundWorker.ReportProgress(1);
-
-                SetGuiEnabledFlag(true);
+                if (!_v.GetVibranceInfo().isInitialized)
+                    return;
 
                 _v.SetApplicationSettings(_applicationSettings);
-                _v.SetShouldRun(true);
-                _v.SetVibranceWindowsLevel(vibranceWindowsLevel);
                 _v.SetAffectPrimaryMonitorOnly(affectPrimaryMonitorOnly);
                 _v.SetNeverSwitchResolution(neverSwitchResolution);
-            }
+                _v.SetShouldRun(true);
+                _v.SetVibranceWindowsLevel(vibranceWindowsLevel);
+                SetGuiEnabledFlag(true);
+                backgroundWorker.ReportProgress(1);
+            });
         }
 
         private void Form1_Shown(object sender, EventArgs e)
         {
-            if (_v != null && _v.GetVibranceInfo().isInitialized)
+            if (_v != null && _v.GetVibranceInfo().shouldRun)
             {
                 SetGuiEnabledFlag(true);
             }
