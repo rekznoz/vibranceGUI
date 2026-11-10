@@ -217,7 +217,7 @@ namespace vibrance.GUI.common
             bool enabled = !_vibranceEnabled;
             _v.SetVibranceEnabled(enabled);
             _vibranceEnabled = enabled;
-            SetStatusText(enabled ? "●  Active" : "●  Inactive", enabled ? ActiveColor : MutedColor);
+            SetStatusText(enabled ? "●  Active" : "●  Inactive", enabled ? ActiveColor : WarningColor);
         }
 
         private void SetStatusText(string english, Color color)
@@ -226,6 +226,8 @@ namespace vibrance.GUI.common
             statusButton.Text = UiLanguage.Translate(english);
             statusButton.StateCommon.Content.ShortText.Color1 = color;
             statusButton.StateCommon.Content.ShortText.Color2 = color;
+            statusButton.OverrideFocus.Content.ShortText.Color1 = color;
+            statusButton.OverrideFocus.Content.ShortText.Color2 = color;
         }
 
         private void BindTranslation(string english, Action<string> apply)
