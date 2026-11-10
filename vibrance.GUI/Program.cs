@@ -22,6 +22,13 @@ namespace vibrance.GUI
         [STAThread]
         static void Main(string[] args)
         {
+#if SINGLE_EXE
+            if (args.Contains("--verify-bundle"))
+            {
+                VerifyBundle();
+                return;
+            }
+#endif
             UiLanguage.Load();
             bool result = false;
             Mutex mutex = new Mutex(true, "vibranceGUI~Mutex", out result);
@@ -94,5 +101,32 @@ namespace vibrance.GUI
 
             GC.KeepAlive(mutex);
         }
+
+#if SINGLE_EXE
+        private static void VerifyBundle()
+        {
+            try
+            {
+                CreateBundleControls();
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine(ex);
+                Environment.ExitCode = 1;
+            }
+        }
+
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
+        private static void CreateBundleControls()
+        {
+            Application.EnableVisualStyles();
+            using (var button = new Krypton.Toolkit.KryptonButton())
+            using (var grid = new Krypton.Toolkit.KryptonDataGridView())
+            {
+                button.CreateControl();
+                grid.CreateControl();
+            }
+        }
+#endif
     }
 }
