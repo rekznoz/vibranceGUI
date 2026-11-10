@@ -43,7 +43,10 @@ namespace vibrance.GUI.common
         private TextBox profileVibranceValue;
         private KryptonTrackBar profileVibranceSlider;
         private KryptonCheckBox profileChangeResolution;
+        private KryptonComboBox profileRefreshRateFilter;
+        private KryptonComboBox profileScalingFilter;
         private KryptonComboBox profileResolution;
+        private Label profileResolutionHint;
 
         protected override void Dispose(bool disposing)
         {
@@ -200,12 +203,12 @@ namespace vibrance.GUI.common
             profiles.Controls.Add(profileListArea, 0, 3);
             workspace.Controls.Add(CreateCard(profiles, new Padding(0, 0, 12, 0)), 0, 0);
 
-            var editor = CreateTable(2, 8);
+            var editor = CreateTable(2, 9);
             profileEditor = editor;
             editor.Padding = new Padding(16, 12, 16, 12);
             editor.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
             editor.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 88));
-            foreach (int height in new[] { 33, 23, 33, 33, 33, 22 })
+            foreach (int height in new[] { 33, 23, 33, 33, 33, 33, 22 })
                 editor.RowStyles.Add(new RowStyle(SizeType.Absolute, height));
             editor.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
             editor.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
@@ -223,12 +226,28 @@ namespace vibrance.GUI.common
             profileChangeResolution.CheckedChanged += profileChangeResolution_CheckedChanged;
             editor.Controls.Add(profileChangeResolution, 0, 3);
             editor.SetColumnSpan(profileChangeResolution, 2);
+
+            var resolutionFilters = CreateTable(2, 1);
+            resolutionFilters.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
+            resolutionFilters.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
+            profileRefreshRateFilter = CreateCombo("Refresh rate");
+            profileRefreshRateFilter.Margin = new Padding(0, 0, 8, 4);
+            profileRefreshRateFilter.ComboBox.SelectionChangeCommitted += profileResolutionFilter_Changed;
+            resolutionFilters.Controls.Add(profileRefreshRateFilter, 0, 0);
+            profileScalingFilter = CreateCombo("Scaling mode");
+            profileScalingFilter.Margin = new Padding(0, 0, 0, 4);
+            profileScalingFilter.ComboBox.SelectionChangeCommitted += profileResolutionFilter_Changed;
+            resolutionFilters.Controls.Add(profileScalingFilter, 1, 0);
+            editor.Controls.Add(resolutionFilters, 0, 4);
+            editor.SetColumnSpan(resolutionFilters, 2);
+
             profileResolution = CreateCombo("In-game resolution");
-            editor.Controls.Add(profileResolution, 0, 4);
+            profileResolution.SelectedIndexChanged += profileResolution_SelectedIndexChanged;
+            editor.Controls.Add(profileResolution, 0, 5);
             editor.SetColumnSpan(profileResolution, 2);
-            var resolutionHint = CreateLabel("Windowed or borderless mode only", MutedColor, 8.5F);
-            editor.Controls.Add(resolutionHint, 0, 5);
-            editor.SetColumnSpan(resolutionHint, 2);
+            profileResolutionHint = CreateLabel("Windowed or borderless mode only", MutedColor, 8.5F, translate: false);
+            editor.Controls.Add(profileResolutionHint, 0, 6);
+            editor.SetColumnSpan(profileResolutionHint, 2);
 
             var editorActions = CreateTable(3, 1);
             editorActions.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
@@ -241,7 +260,7 @@ namespace vibrance.GUI.common
             saveProfile.Click += saveProfile_Click;
             editorActions.Controls.Add(cancelProfile, 1, 0);
             editorActions.Controls.Add(saveProfile, 2, 0);
-            editor.Controls.Add(editorActions, 0, 7);
+            editor.Controls.Add(editorActions, 0, 8);
             editor.SetColumnSpan(editorActions, 2);
 
             var editorArea = new Panel { Dock = DockStyle.Fill, Margin = Padding.Empty };
