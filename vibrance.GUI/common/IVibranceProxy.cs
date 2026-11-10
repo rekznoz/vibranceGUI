@@ -7,6 +7,7 @@ namespace vibrance.GUI.common
     {
         void SetApplicationSettings(List<ApplicationSetting> refApplicationSettings);
         void SetShouldRun(bool shouldRun);
+        void SetVibranceEnabled(bool enabled);
         void SetVibranceWindowsLevel(int vibranceWindowsLevel);
         void SetVibranceIngameLevel(int vibranceIngameLevel);
         bool UnloadLibraryEx();
