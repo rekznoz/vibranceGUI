@@ -30,9 +30,15 @@ namespace vibrance.GUI.common
         private Label emptyProfilesLabel;
         private Button buttonProcessExplorer;
         private Button buttonAddProgram;
-        private Button buttonEditProgram;
         private Button buttonRemoveProgram;
         private ListView listApplications;
+        private Panel profileEditor;
+        private Label profileEditorPlaceholder;
+        private Label profileEditorTitle;
+        private Label profileVibranceValue;
+        private TrackBar profileVibranceSlider;
+        private CheckBox profileChangeResolution;
+        private ComboBox profileResolution;
 
         protected override void Dispose(bool disposing)
         {
@@ -80,7 +86,7 @@ namespace vibrance.GUI.common
             Font = new Font("Segoe UI", 9F);
             BackColor = PageColor;
             ForeColor = TextColor;
-            ClientSize = new Size(576, 594);
+            ClientSize = new Size(824, 594);
             FormBorderStyle = FormBorderStyle.FixedSingle;
             MaximizeBox = false;
             Icon = (Icon)resources.GetObject("$this.Icon");
@@ -94,17 +100,17 @@ namespace vibrance.GUI.common
             mark.TextAlign = ContentAlignment.MiddleCenter;
             var title = CreateLabel("vibranceGUI", 80, 19, TextColor, 20F, FontStyle.Bold);
             var subtitle = CreateLabel("Desktop color and game profiles", 82, 54, MutedColor);
-            statusLabel = CreateLabel("Starting", 422, 29, MutedColor, 9F, FontStyle.Bold, translate: false);
+            statusLabel = CreateLabel("Starting", 670, 29, MutedColor, 9F, FontStyle.Bold, translate: false);
             statusLabel.Text = UiLanguage.Translate(_statusText);
             statusLabel.AutoSize = false;
             statusLabel.Size = new Size(130, 30);
             statusLabel.BackColor = CardColor;
             statusLabel.TextAlign = ContentAlignment.MiddleCenter;
 
-            var desktopCard = new Panel { Location = new Point(24, 88), Size = new Size(528, 112), BackColor = CardColor, TabIndex = 0 };
+            var desktopCard = new Panel { Location = new Point(24, 88), Size = new Size(776, 112), BackColor = CardColor, TabIndex = 0 };
             var desktopHeading = CreateLabel("Desktop vibrance", 16, 12, TextColor, 13F, FontStyle.Bold);
             var desktopDescription = CreateLabel("Color level when no game profile is active.", 17, 41, MutedColor);
-            labelWindowsLevel = CreateLabel("—", 413, 26, AccentColor, 26F, FontStyle.Bold, translate: false);
+            labelWindowsLevel = CreateLabel("—", 661, 26, AccentColor, 26F, FontStyle.Bold, translate: false);
             labelWindowsLevel.AutoSize = false;
             labelWindowsLevel.Size = new Size(98, 56);
             labelWindowsLevel.TextAlign = ContentAlignment.MiddleRight;
@@ -112,7 +118,7 @@ namespace vibrance.GUI.common
             {
                 Name = "trackBarWindowsLevel",
                 Location = new Point(13, 65),
-                Size = new Size(392, 30),
+                Size = new Size(640, 30),
                 AutoSize = false,
                 Maximum = 63,
                 TickStyle = TickStyle.None,
@@ -122,23 +128,21 @@ namespace vibrance.GUI.common
             trackBarWindowsLevel.Scroll += trackBarWindowsLevel_Scroll;
             desktopCard.Controls.AddRange(new Control[] { desktopHeading, desktopDescription, labelWindowsLevel, trackBarWindowsLevel });
 
-            var profilesCard = new Panel { Location = new Point(24, 212), Size = new Size(528, 238), BackColor = CardColor, TabIndex = 1 };
+            var profilesCard = new Panel { Location = new Point(24, 212), Size = new Size(776, 238), BackColor = CardColor, TabIndex = 1 };
             var profilesHeading = CreateLabel("Game profiles", 16, 12, TextColor, 13F, FontStyle.Bold);
             var profilesDescription = CreateLabel("Set a separate color level and display mode for each game.", 17, 41, MutedColor);
             buttonProcessExplorer = CreateButton("Add running game", 16, 67, 139, 32, 0, primary: true);
             buttonAddProgram = CreateButton("Browse…", 163, 67, 89, 32, 1);
-            buttonEditProgram = CreateButton("Edit", 356, 67, 67, 32, 2);
-            buttonRemoveProgram = CreateButton("Remove", 431, 67, 81, 32, 3);
+            buttonRemoveProgram = CreateButton("Remove", 260, 67, 81, 32, 2);
             buttonProcessExplorer.Click += buttonProcessExplorer_Click;
             buttonAddProgram.Click += buttonAddProgram_Click;
-            buttonEditProgram.Click += listApplications_DoubleClick;
             buttonRemoveProgram.Click += buttonRemoveProgram_Click;
 
             listApplications = new ListView
             {
                 Name = "listApplications",
                 Location = new Point(16, 111),
-                Size = new Size(496, 111),
+                Size = new Size(325, 111),
                 BackColor = InsetColor,
                 ForeColor = TextColor,
                 BorderStyle = BorderStyle.None,
@@ -147,15 +151,14 @@ namespace vibrance.GUI.common
                 FullRowSelect = true,
                 OwnerDraw = true,
                 HideSelection = false,
-                TabIndex = 4,
+                TabIndex = 3,
                 UseCompatibleStateImageBehavior = false
             };
             BindTranslation("Game profiles", text => listApplications.AccessibleName = text);
-            BindTranslation("Select a game profile and choose Edit to change it.", text => listApplications.AccessibleDescription = text);
+            BindTranslation("Select a game to edit its profile.", text => listApplications.AccessibleDescription = text);
             var gameColumn = listApplications.Columns.Add("");
             BindTranslation("Game profiles", text => gameColumn.Text = text);
             listApplications.Resize += listApplications_Resize;
-            listApplications.DoubleClick += listApplications_DoubleClick;
             listApplications.DrawSubItem += listApplications_DrawSubItem;
             listApplications.SelectedIndexChanged += listApplications_SelectedIndexChanged;
             listApplications_Resize(listApplications, EventArgs.Empty);
@@ -165,10 +168,66 @@ namespace vibrance.GUI.common
             emptyProfilesLabel.Size = listApplications.Size;
             emptyProfilesLabel.TextAlign = ContentAlignment.MiddleCenter;
             emptyProfilesLabel.BackColor = InsetColor;
-            profilesCard.Controls.AddRange(new Control[] { profilesHeading, profilesDescription, buttonProcessExplorer,
-                buttonAddProgram, buttonEditProgram, buttonRemoveProgram, emptyProfilesLabel, listApplications });
+            profileEditor = new Panel
+            {
+                Location = new Point(357, 12),
+                Size = new Size(403, 210),
+                BackColor = InsetColor,
+                TabIndex = 4,
+                Visible = false
+            };
+            profileEditorTitle = CreateLabel("", 16, 9, TextColor, 12F, FontStyle.Bold, translate: false);
+            profileEditorTitle.AutoSize = false;
+            profileEditorTitle.AutoEllipsis = true;
+            profileEditorTitle.Size = new Size(369, 25);
+            var profileVibranceHeading = CreateLabel("In-game vibrance", 16, 43, MutedColor);
+            profileVibranceValue = CreateLabel("", 319, 39, AccentColor, 13F, FontStyle.Bold, translate: false);
+            profileVibranceValue.AutoSize = false;
+            profileVibranceValue.Size = new Size(67, 25);
+            profileVibranceValue.TextAlign = ContentAlignment.MiddleRight;
+            profileVibranceSlider = new TrackBar
+            {
+                Location = new Point(12, 65),
+                Size = new Size(377, 28),
+                AutoSize = false,
+                TickStyle = TickStyle.None,
+                BackColor = InsetColor,
+                TabIndex = 0
+            };
+            BindTranslation("In-game vibrance", text => profileVibranceSlider.AccessibleName = text);
+            profileVibranceSlider.ValueChanged += profileVibranceSlider_ValueChanged;
+            profileChangeResolution = CreateCheckBox("Change resolution in-game", 16, 100, 1);
+            profileChangeResolution.CheckedChanged += profileChangeResolution_CheckedChanged;
+            profileResolution = new ComboBox
+            {
+                Location = new Point(16, 125),
+                Size = new Size(371, 24),
+                DropDownStyle = ComboBoxStyle.DropDownList,
+                DrawMode = DrawMode.OwnerDrawFixed,
+                FlatStyle = FlatStyle.Flat,
+                BackColor = ButtonColor,
+                ForeColor = TextColor,
+                TabIndex = 2
+            };
+            BindTranslation("In-game resolution", text => profileResolution.AccessibleName = text);
+            profileResolution.DrawItem += dashboardCombo_DrawItem;
+            var profileResolutionHint = CreateLabel("Windowed or borderless mode only", 16, 151, MutedColor, 8F);
+            var cancelProfile = CreateButton("Cancel", 202, 173, 88, 27, 3);
+            var saveProfile = CreateButton("Save", 298, 173, 89, 27, 4, primary: true);
+            cancelProfile.Click += cancelProfile_Click;
+            saveProfile.Click += saveProfile_Click;
+            profileEditor.Controls.AddRange(new Control[] { profileEditorTitle, profileVibranceHeading, profileVibranceValue,
+                profileVibranceSlider, profileChangeResolution, profileResolution, profileResolutionHint, cancelProfile, saveProfile });
 
-            var preferencesCard = new Panel { Location = new Point(24, 462), Size = new Size(528, 78), BackColor = CardColor, TabIndex = 2 };
+            profileEditorPlaceholder = CreateLabel("Select a game to edit its profile.", 357, 12, MutedColor);
+            profileEditorPlaceholder.AutoSize = false;
+            profileEditorPlaceholder.Size = profileEditor.Size;
+            profileEditorPlaceholder.TextAlign = ContentAlignment.MiddleCenter;
+            profileEditorPlaceholder.BackColor = InsetColor;
+            profilesCard.Controls.AddRange(new Control[] { profilesHeading, profilesDescription, buttonProcessExplorer,
+                buttonAddProgram, buttonRemoveProgram, emptyProfilesLabel, listApplications, profileEditor, profileEditorPlaceholder });
+
+            var preferencesCard = new Panel { Location = new Point(24, 462), Size = new Size(776, 78), BackColor = CardColor, TabIndex = 2 };
             var preferencesHeading = CreateLabel("Preferences", 16, 11, TextColor, 13F, FontStyle.Bold);
             checkBoxAutostart = CreateCheckBox("Start with Windows", 17, 43, 0);
             checkBoxPrimaryMonitorOnly = CreateCheckBox("Primary monitor only", 175, 43, 1);
@@ -183,11 +242,11 @@ namespace vibrance.GUI.common
                 checkBoxPrimaryMonitorOnly, checkBoxNeverChangeResolutions });
 
             var footer = CreateLabel("Autosave on", 24, 562, MutedColor);
-            var languageLabel = CreateLabel("Language", 185, 562, MutedColor);
+            var languageLabel = CreateLabel("Language", 433, 562, MutedColor);
             var languageSelector = new ComboBox
             {
                 Name = "languageSelector",
-                Location = new Point(246, 555),
+                Location = new Point(494, 555),
                 Size = new Size(122, 24),
                 DropDownStyle = ComboBoxStyle.DropDownList,
                 DrawMode = DrawMode.OwnerDrawFixed,
@@ -196,13 +255,13 @@ namespace vibrance.GUI.common
                 ForeColor = TextColor,
                 TabIndex = 3
             };
-            languageSelector.DrawItem += languageSelector_DrawItem;
+            languageSelector.DrawItem += dashboardCombo_DrawItem;
             BindTranslation("Language", text => languageSelector.AccessibleName = text);
             languageSelector.Items.AddRange(new object[] { "English", "Español", "Português" });
             languageSelector.SelectedIndex = UiLanguage.SelectedIndex;
             languageSelector.SelectedIndexChanged += languageSelector_SelectedIndexChanged;
-            var updates = CreateButton("Updates", 386, 551, 80, 31, 4);
-            var donate = CreateButton("Donate", 472, 551, 80, 31, 5);
+            var updates = CreateButton("Updates", 634, 551, 80, 31, 4);
+            var donate = CreateButton("Donate", 720, 551, 80, 31, 5);
             updates.Click += twitterToolStripTextBox_Click;
             donate.Click += buttonPaypal_Click;
 
