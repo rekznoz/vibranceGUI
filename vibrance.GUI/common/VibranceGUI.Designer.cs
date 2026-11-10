@@ -454,9 +454,12 @@ namespace vibrance.GUI.common
             {
                 comboPalette = new KryptonCustomPaletteBase(components)
                 {
-                    BasePalette = PaletteMode.Microsoft365BlackDarkMode,
+                    BasePalette = KryptonManager.CurrentGlobalPalette,
                     BaseRenderer = new ComboChevronRenderer()
                 };
+                var dropButton = comboPalette.ButtonStyles.ButtonLowProfile.StateCommon;
+                dropButton.Back.Draw = InheritBool.False;
+                dropButton.Border.Draw = InheritBool.False;
             }
             var combo = new KryptonComboBox
             {
