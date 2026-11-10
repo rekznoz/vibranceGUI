@@ -26,8 +26,9 @@ namespace vibrance.GUI.common
 
         public override string ToString()
         {
-            return String.Format("{0} x {1} @ {3} hz ({2} bit, {4})", this.DmPelsWidth, this.DmPelsHeight, 
-                this.DmBitsPerPel, this.DmDisplayFrequency, Enum.GetName(typeof(Dmdfo), this.DmDisplayFixedOutput));
+            string scaling = Enum.GetName(typeof(Dmdfo), (Dmdfo)this.DmDisplayFixedOutput) ?? "";
+            return String.Format("{0} x {1} @ {3} Hz ({2} bit, {4})", this.DmPelsWidth, this.DmPelsHeight,
+                this.DmBitsPerPel, this.DmDisplayFrequency, UiLanguage.Translate(scaling));
         }
 
         public override bool Equals(object obj)
