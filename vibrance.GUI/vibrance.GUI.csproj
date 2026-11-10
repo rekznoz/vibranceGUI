@@ -148,6 +148,7 @@
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="common\SettingsController.cs" />
+    <Compile Include="common\UiLanguage.cs" />
     <EmbeddedResource Include="common\ProcessExplorer.resx">
       <DependentUpon>ProcessExplorer.cs</DependentUpon>
     </EmbeddedResource>
