@@ -1,6 +1,7 @@
 using System;
 using System.ComponentModel;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Windows.Forms;
 using Krypton.Toolkit;
 
@@ -20,6 +21,7 @@ namespace vibrance.GUI.common
         private static readonly Color WarningColor = Color.FromArgb(255, 156, 153);
 
         private IContainer components;
+        private Bitmap[] switchImages;
         private NotifyIcon notifyIcon;
         private BackgroundWorker backgroundWorker;
         private Timer settingsSaveTimer;
@@ -48,6 +50,12 @@ namespace vibrance.GUI.common
                 components?.Dispose();
 
             base.Dispose(disposing);
+            if (disposing && switchImages != null)
+            {
+                foreach (var image in switchImages)
+                    image.Dispose();
+                switchImages = null;
+            }
         }
 
         private void InitializeComponent()
@@ -378,8 +386,43 @@ namespace vibrance.GUI.common
             var checkBox = new KryptonCheckBox { Dock = DockStyle.Fill, Margin = Padding.Empty, AutoSize = false };
             checkBox.StateCommon.ShortText.Color1 = TextColor;
             checkBox.StateCommon.ShortText.Color2 = TextColor;
+            checkBox.StateCommon.AdjacentGap = 8;
+            if (switchImages == null)
+            {
+                switchImages = new[]
+                {
+                    DrawSwitch(false, BorderColor, MutedColor),
+                    DrawSwitch(false, Color.FromArgb(74, 87, 115), TextColor),
+                    DrawSwitch(false, ButtonColor, Color.FromArgb(108, 121, 141)),
+                    DrawSwitch(true, AccentColor, PageColor),
+                    DrawSwitch(true, Color.FromArgb(197, 211, 255), PageColor),
+                    DrawSwitch(true, Color.FromArgb(84, 98, 137), CardColor)
+                };
+            }
+            checkBox.Images.UncheckedNormal = switchImages[0];
+            checkBox.Images.UncheckedTracking = checkBox.Images.UncheckedPressed = switchImages[1];
+            checkBox.Images.UncheckedDisabled = switchImages[2];
+            checkBox.Images.CheckedNormal = switchImages[3];
+            checkBox.Images.CheckedTracking = checkBox.Images.CheckedPressed = switchImages[4];
+            checkBox.Images.CheckedDisabled = switchImages[5];
             BindTranslation(text, translation => checkBox.Text = translation);
             return checkBox;
+        }
+
+        private static Bitmap DrawSwitch(bool enabled, Color trackColor, Color thumbColor)
+        {
+            var image = new Bitmap(34, 20);
+            using (var graphics = Graphics.FromImage(image))
+            using (var track = new SolidBrush(trackColor))
+            using (var thumb = new SolidBrush(thumbColor))
+            {
+                graphics.SmoothingMode = SmoothingMode.AntiAlias;
+                graphics.FillEllipse(track, 1, 2, 16, 16);
+                graphics.FillEllipse(track, 17, 2, 16, 16);
+                graphics.FillRectangle(track, 9, 2, 16, 16);
+                graphics.FillEllipse(thumb, enabled ? 19 : 3, 4, 12, 12);
+            }
+            return image;
         }
 
         private KryptonTrackBar CreateSlider(string name)
