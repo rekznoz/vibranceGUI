@@ -24,8 +24,9 @@ namespace vibrance.GUI.common
         {
             InitializeComponent();
 
-            listView.Columns.Add("Programs", 130, HorizontalAlignment.Left);
-            listView.Columns.Add("Full Path", 320, HorizontalAlignment.Left);
+            listView.Columns.Add("", 130, HorizontalAlignment.Left);
+            listView.Columns.Add("", 320, HorizontalAlignment.Left);
+            RefreshLanguage();
             listView.LargeImageList = iconList;
             listView.FullRowSelect = true;
             listView.View = View.Tile;
@@ -35,6 +36,14 @@ namespace vibrance.GUI.common
 
             backgroundWorker.WorkerReportsProgress = true;
             backgroundWorker.RunWorkerAsync();
+        }
+
+        internal void RefreshLanguage()
+        {
+            Text = "vibranceGUI · " + UiLanguage.Translate("Process explorer");
+            button.Text = UiLanguage.Translate("Reload processes");
+            listView.Columns[0].Text = UiLanguage.Translate("Programs");
+            listView.Columns[1].Text = UiLanguage.Translate("Full path");
         }
 
         private void GetAllProcesses()
