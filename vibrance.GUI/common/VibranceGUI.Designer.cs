@@ -95,6 +95,7 @@ namespace vibrance.GUI.common
             var title = CreateLabel("vibranceGUI", 80, 19, TextColor, 20F, FontStyle.Bold);
             var subtitle = CreateLabel("Desktop color and game profiles", 82, 54, MutedColor);
             statusLabel = CreateLabel("Starting", 422, 29, MutedColor, 9F, FontStyle.Bold, translate: false);
+            statusLabel.Text = UiLanguage.Translate(_statusText);
             statusLabel.AutoSize = false;
             statusLabel.Size = new Size(130, 30);
             statusLabel.BackColor = CardColor;
@@ -158,10 +159,8 @@ namespace vibrance.GUI.common
             listApplications.DrawSubItem += listApplications_DrawSubItem;
             listApplications.SelectedIndexChanged += listApplications_SelectedIndexChanged;
             listApplications_Resize(listApplications, EventArgs.Empty);
-            emptyProfilesLabel = CreateLabel("", 16, 111, MutedColor, translate: false);
-            _languageBindings.Add(() => emptyProfilesLabel.Text = UiLanguage.Translate("No game profiles yet") +
-                Environment.NewLine + UiLanguage.Translate("Add a running game or browse for an executable."));
-            _languageBindings[_languageBindings.Count - 1]();
+            emptyProfilesLabel = CreateLabel("No game profiles yet\r\nAdd a running game or browse for an executable.",
+                16, 111, MutedColor);
             emptyProfilesLabel.AutoSize = false;
             emptyProfilesLabel.Size = listApplications.Size;
             emptyProfilesLabel.TextAlign = ContentAlignment.MiddleCenter;
