@@ -6,9 +6,9 @@ on:
   workflow_dispatch:
     inputs:
       single_exe:
-        description: Build the experimental single executable
+        description: Build the single executable (uncheck for the ZIP with lib)
         type: boolean
-        default: false
+        default: true
 
 permissions:
   contents: read
@@ -16,14 +16,14 @@ permissions:
 jobs:
   release-x86:
     runs-on: windows-2022
+    env:
+      SINGLE_EXE: ${{ github.event_name != 'workflow_dispatch' || inputs.single_exe }}
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
       - name: Build Release x86
         shell: pwsh
-        env:
-          SINGLE_EXE: ${{ inputs.single_exe || false }}
         run: |
           $vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
           $msbuild = & $vswhere -latest -products '*' -requires Microsoft.Component.MSBuild -find 'MSBuild\Current\Bin\MSBuild.exe' | Select-Object -First 1
@@ -34,7 +34,7 @@ jobs:
             throw 'Krypton.Toolkit.dll is missing from the build output.'
           }
       - name: Package Release x86
-        if: ${{ !inputs.single_exe }}
+        if: ${{ env.SINGLE_EXE == 'false' }}
         shell: pwsh
         run: |
           $output = (Resolve-Path 'vibrance.GUI/bin/x86/Release').Path
@@ -51,14 +51,14 @@ jobs:
             Copy-Item -LiteralPath $_.FullName -Destination $destination
           }
       - name: Upload Release x86
-        if: ${{ !inputs.single_exe }}
+        if: ${{ env.SINGLE_EXE == 'false' }}
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: vibranceGUI-Release-x86
           path: ${{ runner.temp }}/vibranceGUI-Release-x86/
           if-no-files-found: error
       - name: Verify single executable in isolation
-        if: ${{ inputs.single_exe }}
+        if: ${{ env.SINGLE_EXE == 'true' }}
         shell: pwsh
         run: |
           $package = Join-Path $env:RUNNER_TEMP 'vibranceGUI-SingleExe-x86'
@@ -75,8 +75,8 @@ jobs:
             Get-Content -LiteralPath $log
             throw "Standalone startup check failed ($($probe.ExitCode))."
           }
-      - name: Upload experimental single executable
-        if: ${{ inputs.single_exe }}
+      - name: Upload single executable
+        if: ${{ env.SINGLE_EXE == 'true' }}
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: vibranceGUI-SingleExe-x86
