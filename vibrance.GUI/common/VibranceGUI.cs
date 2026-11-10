@@ -287,15 +287,15 @@ namespace vibrance.GUI.common
                 string pathToExe = "\"" + Application.ExecutablePath + "\" -minimized";
                 if (!autostartController.IsProgramRegistered(AppName))
                 {
-                    this.notifyIcon.BalloonTipText = autostartController.RegisterProgram(AppName, pathToExe) 
-                        ? "Registered to Autostart!" 
-                        : "Registering to Autostart failed!";
+                    this.notifyIcon.BalloonTipText = UiLanguage.Translate(autostartController.RegisterProgram(AppName, pathToExe)
+                        ? "Registered to Autostart!"
+                        : "Registering to Autostart failed!");
                 }
                 else if (!autostartController.IsStartupPathUnchanged(AppName, pathToExe))
                 {
-                    this.notifyIcon.BalloonTipText = autostartController.RegisterProgram(AppName, pathToExe)
+                    this.notifyIcon.BalloonTipText = UiLanguage.Translate(autostartController.RegisterProgram(AppName, pathToExe)
                         ? "Updated Autostart Path!"
-                        : "Updating Autostart Path failed!";
+                        : "Updating Autostart Path failed!");
                 }
                 else
                 {
@@ -304,9 +304,9 @@ namespace vibrance.GUI.common
             }
             else
             {
-                this.notifyIcon.BalloonTipText = autostartController.UnregisterProgram(AppName) 
-                    ? "Unregistered from Autostart!" 
-                    : "Unregistering from Autostart failed!";
+                this.notifyIcon.BalloonTipText = UiLanguage.Translate(autostartController.UnregisterProgram(AppName)
+                    ? "Unregistered from Autostart!"
+                    : "Unregistering from Autostart failed!");
             }
 
             notifyIcon.ShowBalloonTip(250);
