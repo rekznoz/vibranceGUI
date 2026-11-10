@@ -245,6 +245,23 @@ namespace vibrance.GUI.common
                 ShowSaveError();
         }
 
+        private void languageSelector_DrawItem(object sender, DrawItemEventArgs e)
+        {
+            bool selected = (e.State & DrawItemState.Selected) != 0;
+            using (var background = new SolidBrush(selected ? BorderColor : ButtonColor))
+                e.Graphics.FillRectangle(background, e.Bounds);
+
+            if (e.Index >= 0)
+            {
+                var selector = (ComboBox)sender;
+                var bounds = Rectangle.Inflate(e.Bounds, -4, 0);
+                TextRenderer.DrawText(e.Graphics, selector.Items[e.Index].ToString(), selector.Font, bounds, TextColor,
+                    TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix);
+            }
+
+            e.DrawFocusRectangle();
+        }
+
         private void notifyIcon_MouseClick(object sender, MouseEventArgs e)
         {
             _allowVisible = true;
