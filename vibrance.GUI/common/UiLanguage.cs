@@ -60,6 +60,9 @@ namespace vibrance.GUI.common
             { "The graphics driver could not be initialized. Press OK to open the vibranceGUI guide.", new[] { "No se pudo inicializar el controlador gráfico. Pulsa Aceptar para abrir la guía de vibranceGUI.", "Não foi possível inicializar o controlador gráfico. Seleciona OK para abrir o guia do vibranceGUI." } },
             { "The NVIDIA system type could not be determined.", new[] { "No se pudo determinar el tipo de sistema NVIDIA.", "Não foi possível determinar o tipo de sistema NVIDIA." } },
             { "Changing the resolution failed: {0}", new[] { "No se pudo cambiar la resolución: {0}", "Não foi possível alterar a resolução: {0}" } },
+            { "Default", new[] { "Predeterminado", "Predefinido" } },
+            { "Stretch", new[] { "Estirar", "Esticar" } },
+            { "Center", new[] { "Centrar", "Centrar" } },
         };
         private static readonly string[] LanguageCodes = { "en", "es", "pt" };
 
