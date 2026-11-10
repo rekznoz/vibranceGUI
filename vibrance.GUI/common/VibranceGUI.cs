@@ -474,27 +474,43 @@ namespace vibrance.GUI.common
         {
             if (this.listApplications.LargeImageList == null)
             {
-                ImageList imageList = new ImageList();
-                imageList.ImageSize = new Size(48, 48);
+                ImageList imageList = new ImageList(components);
+                imageList.ImageSize = new Size(36, 36);
                 imageList.ColorDepth = ColorDepth.Depth32Bit;
                 this.listApplications.LargeImageList = imageList;
-                ListViewItem_SetSpacing(this.listApplications, 48 + 24, 48 + 6 + 16);
+                this.listApplications.SmallImageList = imageList;
             }
         }
 
-        [DllImport("user32.dll")]
-        public static extern int SendMessage(IntPtr hWnd, int msg, IntPtr wParam, IntPtr lParam);
-
-        public int MakeLong(short lowPart, short highPart)
+        private void listApplications_Resize(object sender, EventArgs e)
         {
-            return (int)(((ushort)lowPart) | (uint)(highPart << 16));
+            listApplications.Columns[0].Width = Math.Max(0, listApplications.ClientSize.Width - SystemInformation.VerticalScrollBarWidth);
         }
 
-        public void ListViewItem_SetSpacing(ListView listview, short leftPadding, short topPadding)
+        private void listApplications_DrawSubItem(object sender, DrawListViewSubItemEventArgs e)
         {
-            const int LVM_FIRST = 0x1000;
-            const int LVM_SETICONSPACING = LVM_FIRST + 53;
-            SendMessage(listview.Handle, LVM_SETICONSPACING, IntPtr.Zero, (IntPtr)MakeLong(leftPadding, topPadding));
+            bool selected = e.Item.Selected;
+            Rectangle row = e.Bounds;
+            using (var background = new SolidBrush(selected ? ButtonColor : InsetColor))
+                e.Graphics.FillRectangle(background, row);
+
+            if (selected)
+            {
+                using (var accent = new SolidBrush(AccentColor))
+                    e.Graphics.FillRectangle(accent, row.Left, row.Top, 3, row.Height);
+            }
+
+            const int iconSize = 26;
+            var imageList = listApplications.SmallImageList;
+            if (imageList != null && e.Item.ImageIndex >= 0 && e.Item.ImageIndex < imageList.Images.Count)
+                imageList.Draw(e.Graphics, row.Left + 11, row.Top + (row.Height - iconSize) / 2, iconSize, iconSize, e.Item.ImageIndex);
+
+            var textBounds = new Rectangle(row.Left + 47, row.Top, Math.Max(0, row.Width - 55), row.Height);
+            TextRenderer.DrawText(e.Graphics, e.Item.Text, listApplications.Font, textBounds, TextColor,
+                TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix);
+
+            if (listApplications.Focused && e.Item.Focused)
+                ControlPaint.DrawFocusRectangle(e.Graphics, Rectangle.Inflate(row, -4, -1), TextColor, ButtonColor);
         }
 
         private void listApplications_DoubleClick(object sender, EventArgs e)
@@ -555,7 +571,9 @@ namespace vibrance.GUI.common
             int selected = listApplications.SelectedItems.Count;
             buttonEditProgram.Enabled = listApplications.Enabled && selected == 1;
             buttonRemoveProgram.Enabled = listApplications.Enabled && selected > 0;
-            emptyProfilesLabel.Visible = listApplications.Items.Count == 0;
+            bool hasProfiles = listApplications.Items.Count > 0;
+            listApplications.Visible = hasProfiles;
+            emptyProfilesLabel.Visible = !hasProfiles;
         }
 
         private void buttonProcessExplorer_Click(object sender, EventArgs e)
