@@ -81,6 +81,20 @@ namespace vibrance.GUI.common
             base.SetVisibleCore(value);
         }
 
+        [DllImport("dwmapi.dll")]
+        private static extern int DwmSetWindowAttribute(IntPtr window, int attribute, ref int value, int size);
+
+        protected override void OnHandleCreated(EventArgs e)
+        {
+            base.OnHandleCreated(e);
+            if (!SystemInformation.HighContrast)
+            {
+                const int useImmersiveDarkMode = 20;
+                int enabled = 1;
+                DwmSetWindowAttribute(Handle, useImmersiveDarkMode, ref enabled, sizeof(int));
+            }
+        }
+
         public void SetAllowVisible(bool value)
         {
             _allowVisible = value;
@@ -187,12 +201,13 @@ namespace vibrance.GUI.common
         {
             if (e.ProgressPercentage == 1)
             {
-                this.statusLabel.Text = "Running!";
-                this.statusLabel.ForeColor = Color.Green;
+                this.statusLabel.Text = "●  Active";
+                this.statusLabel.ForeColor = AccentColor;
             }
             else if (e.ProgressPercentage == 2)
             {
-                this.statusLabel.Text = $"NVAPI Unloaded: {e.UserState}";
+                this.statusLabel.Text = "NVAPI unloaded";
+                this.statusLabel.ForeColor = WarningColor;
             }
         }
 
@@ -268,11 +283,6 @@ namespace vibrance.GUI.common
             Process.Start(TwitterLink);
         }
 
-        private void linkLabelTwitter_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
-        {
-            Process.Start(TwitterLink);
-        }
-
         private void SetGuiEnabledFlag(bool flag)
         {
             this.Invoke((MethodInvoker)delegate
@@ -280,9 +290,11 @@ namespace vibrance.GUI.common
                 this.trackBarWindowsLevel.Enabled = flag;
                 this.checkBoxAutostart.Enabled = flag;
                 this.checkBoxPrimaryMonitorOnly.Enabled = flag;
+                this.checkBoxNeverChangeResolutions.Enabled = flag;
                 this.buttonAddProgram.Enabled = flag;
                 this.buttonProcessExplorer.Enabled = flag;
-                this.buttonRemoveProgram.Enabled = flag;
+                this.listApplications.Enabled = flag;
+                UpdateProfileActions();
             });
         }
 
@@ -291,7 +303,7 @@ namespace vibrance.GUI.common
             try
             {
                 this.statusLabel.Text = "Closing...";
-                this.statusLabel.ForeColor = Color.Red;
+                this.statusLabel.ForeColor = WarningColor;
                 this.Update();
                 if (_v != null && _v.GetVibranceInfo().isInitialized)
                 {
@@ -371,6 +383,7 @@ namespace vibrance.GUI.common
                         this.listApplications.Items.Add(lvi);
                     }
                 }
+                UpdateProfileActions();
                 _settingsLoaded = true;
             }
         }
@@ -450,6 +463,7 @@ namespace vibrance.GUI.common
                 lvi.ImageIndex = this.listApplications.Items.Count;
                 lvi.Tag = path;
                 this.listApplications.Items.Add(lvi);
+                UpdateProfileActions();
                 this.listApplications.SelectedIndices.Clear();
                 lvi.Selected = true;
                 listApplications_DoubleClick(this, EventArgs.Empty);
@@ -485,9 +499,9 @@ namespace vibrance.GUI.common
 
         private void listApplications_DoubleClick(object sender, EventArgs e)
         {
-            ListViewItem selectedItem = this.listApplications.SelectedItems[0];
-            if (selectedItem != null)
+            if (listApplications.SelectedItems.Count == 1)
             {
+                ListViewItem selectedItem = listApplications.SelectedItems[0];
                 ApplicationSetting actualSetting = _applicationSettings.FirstOrDefault(x => x.FileName == selectedItem.Tag.ToString());
                 VibranceSettings settingsWindow = new VibranceSettings(_v, _minTrackBarValue, _maxTrackBarValue, _defaultIngameValue, selectedItem, actualSetting, _supportedResolutionList, _resolveLabelLevel);
                 DialogResult result = settingsWindow.ShowDialog();
@@ -510,11 +524,8 @@ namespace vibrance.GUI.common
 
         private void buttonRemoveProgram_Click(object sender, EventArgs e)
         {
-            foreach (ListViewItem eachItem in listApplications.SelectedItems)
+            foreach (ListViewItem eachItem in listApplications.SelectedItems.Cast<ListViewItem>().ToArray())
             {
-                for (int i = eachItem.Index + 1; i < listApplications.Items.Count; i++)
-                    listApplications.Items[i].ImageIndex--;
-
                 removeApplicationListItem(eachItem);
                 _applicationSettings.Remove(_applicationSettings.FirstOrDefault(x => x.FileName.Equals(eachItem.Tag.ToString())));
             }
@@ -524,10 +535,27 @@ namespace vibrance.GUI.common
 
         private void removeApplicationListItem(ListViewItem item)
         {
+            for (int i = item.Index + 1; i < listApplications.Items.Count; i++)
+                listApplications.Items[i].ImageIndex--;
+
             Image img = this.listApplications.LargeImageList.Images[item.ImageIndex];
             this.listApplications.LargeImageList.Images.RemoveAt(item.ImageIndex);
             img.Dispose();
             this.listApplications.Items.Remove(item);
+            UpdateProfileActions();
+        }
+
+        private void listApplications_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            UpdateProfileActions();
+        }
+
+        private void UpdateProfileActions()
+        {
+            int selected = listApplications.SelectedItems.Count;
+            buttonEditProgram.Enabled = listApplications.Enabled && selected == 1;
+            buttonRemoveProgram.Enabled = listApplications.Enabled && selected > 0;
+            emptyProfilesLabel.Visible = listApplications.Items.Count == 0;
         }
 
         private void buttonProcessExplorer_Click(object sender, EventArgs e)
