@@ -29,7 +29,7 @@ namespace vibrance.GUI.common
         private KryptonCheckBox checkBoxAutostart;
         private KryptonCheckBox checkBoxPrimaryMonitorOnly;
         private KryptonCheckBox checkBoxNeverChangeResolutions;
-        private Label labelWindowsLevel;
+        private TextBox windowsVibranceValue;
         private KryptonTrackBar trackBarWindowsLevel;
         private KryptonButton statusButton;
         private Label emptyProfilesLabel;
@@ -40,7 +40,7 @@ namespace vibrance.GUI.common
         private Panel profileEditor;
         private Label profileEditorPlaceholder;
         private Label profileEditorTitle;
-        private Label profileVibranceValue;
+        private TextBox profileVibranceValue;
         private KryptonTrackBar profileVibranceSlider;
         private KryptonCheckBox profileChangeResolution;
         private KryptonComboBox profileResolution;
@@ -138,8 +138,8 @@ namespace vibrance.GUI.common
             desktop.Controls.Add(CreateLabel("Color level when no game profile is active.", MutedColor), 0, 1);
             trackBarWindowsLevel = CreateSlider("Desktop vibrance");
             desktop.Controls.Add(trackBarWindowsLevel, 0, 2);
-            labelWindowsLevel = CreateVibranceValue("—");
-            desktop.Controls.Add(labelWindowsLevel, 1, 2);
+            windowsVibranceValue = CreateVibranceInput(trackBarWindowsLevel, "Desktop vibrance");
+            desktop.Controls.Add(windowsVibranceValue, 1, 2);
             trackBarWindowsLevel.ValueChanged += trackBarWindowsLevel_ValueChanged;
             dashboard.Controls.Add(CreateCard(desktop, new Padding(0, 0, 0, 12)), 0, 1);
 
@@ -214,11 +214,11 @@ namespace vibrance.GUI.common
             editor.Controls.Add(profileEditorTitle, 0, 0);
             editor.SetColumnSpan(profileEditorTitle, 2);
             editor.Controls.Add(CreateLabel("In-game vibrance", MutedColor), 0, 1);
-            profileVibranceValue = CreateVibranceValue("");
-            editor.Controls.Add(profileVibranceValue, 1, 2);
             profileVibranceSlider = CreateSlider("In-game vibrance");
             profileVibranceSlider.ValueChanged += profileVibranceSlider_ValueChanged;
             editor.Controls.Add(profileVibranceSlider, 0, 2);
+            profileVibranceValue = CreateVibranceInput(profileVibranceSlider, "In-game vibrance");
+            editor.Controls.Add(profileVibranceValue, 1, 2);
             profileChangeResolution = CreateCheckBox("Change resolution in-game");
             profileChangeResolution.CheckedChanged += profileChangeResolution_CheckedChanged;
             editor.Controls.Add(profileChangeResolution, 0, 3);
@@ -409,12 +409,30 @@ namespace vibrance.GUI.common
             return image;
         }
 
-        private Label CreateVibranceValue(string text)
+        private TextBox CreateVibranceInput(KryptonTrackBar slider, string name)
         {
-            var label = CreateLabel(text, AccentColor, 18F, FontStyle.Bold, translate: false);
-            label.TextAlign = ContentAlignment.MiddleRight;
-            label.AutoEllipsis = false;
-            return label;
+            var input = new TextBox
+            {
+                Anchor = AnchorStyles.Left | AnchorStyles.Right,
+                Margin = new Padding(12, 0, 0, 0),
+                BackColor = InsetColor,
+                ForeColor = AccentColor,
+                BorderStyle = BorderStyle.FixedSingle,
+                Font = new Font("Segoe UI", 12F, FontStyle.Bold),
+                TextAlign = HorizontalAlignment.Right
+            };
+            BindTranslation(name, translation => input.AccessibleName = translation);
+            input.Leave += (sender, e) => CommitVibranceInput(input, slider);
+            input.KeyDown += (sender, e) =>
+            {
+                if (e.KeyCode != Keys.Enter)
+                    return;
+
+                e.SuppressKeyPress = true;
+                CommitVibranceInput(input, slider);
+                input.SelectAll();
+            };
+            return input;
         }
 
         private KryptonTrackBar CreateSlider(string name)
