@@ -14,10 +14,10 @@ More information and binary download available at: http://vibrancegui.com/
 On Windows, install Visual Studio 2022 or its Build Tools with the .NET desktop build tools and the [.NET Framework 4.8 Developer Pack](https://learn.microsoft.com/en-us/dotnet/framework/install/guide-for-developers). Open a Developer Command Prompt and run:
 
 ```bat
-msbuild vibrance.GUI.sln /m /p:Configuration=Release /p:Platform=x86
+msbuild vibrance.GUI.sln /restore /m /p:Configuration=Release /p:Platform=x86
 ```
 
-The executable and its configuration are in `vibrance.GUI\bin\x86\Release\`. The project uses no NuGet packages. GitHub Actions runs the same Release x86 build on Windows. The NVIDIA bridge requires an x86 executable, including on 64-bit Windows.
+The executable, configuration and UI dependencies are in `vibrance.GUI\bin\x86\Release\`. Keep them together when copying the app. GitHub Actions restores Krypton Toolkit from NuGet and packages the Release x86 build. The NVIDIA bridge requires an x86 executable, including on 64-bit Windows.
 
 ### NVIDIA bridge provenance
 
