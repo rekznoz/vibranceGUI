@@ -54,7 +54,7 @@
             this.groupBox2.Size = new System.Drawing.Size(246, 72);
             this.groupBox2.TabIndex = 13;
             this.groupBox2.TabStop = false;
-            this.groupBox2.Text = "Ingame Vibrance Level";
+            this.groupBox2.Text = UiLanguage.Translate("In-game vibrance");
             // 
             // trackBarIngameLevel
             // 
@@ -80,7 +80,7 @@
             this.buttonSave.Name = "buttonSave";
             this.buttonSave.Size = new System.Drawing.Size(75, 23);
             this.buttonSave.TabIndex = 14;
-            this.buttonSave.Text = "Save";
+            this.buttonSave.Text = UiLanguage.Translate("Save");
             this.buttonSave.UseVisualStyleBackColor = true;
             this.buttonSave.Click += new System.EventHandler(this.buttonSave_Click);
             // 
@@ -92,7 +92,6 @@
             this.labelTitle.Name = "labelTitle";
             this.labelTitle.Size = new System.Drawing.Size(63, 13);
             this.labelTitle.TabIndex = 15;
-            this.labelTitle.Text = "Settings for ";
             // 
             // pictureBox
             // 
@@ -121,7 +120,7 @@
             this.groupBox1.Size = new System.Drawing.Size(246, 84);
             this.groupBox1.TabIndex = 19;
             this.groupBox1.TabStop = false;
-            this.groupBox1.Text = "Ingame Resolution";
+            this.groupBox1.Text = UiLanguage.Translate("In-game resolution");
             // 
             // labelResolution
             // 
@@ -131,7 +130,7 @@
             this.labelResolution.Name = "labelResolution";
             this.labelResolution.Size = new System.Drawing.Size(225, 13);
             this.labelResolution.TabIndex = 19;
-            this.labelResolution.Text = "For (Borderless) Windowed Mode players only!";
+            this.labelResolution.Text = UiLanguage.Translate("Windowed or borderless mode only");
             // 
             // checkBoxResolution
             // 
@@ -140,7 +139,7 @@
             this.checkBoxResolution.Name = "checkBoxResolution";
             this.checkBoxResolution.Size = new System.Drawing.Size(183, 17);
             this.checkBoxResolution.TabIndex = 18;
-            this.checkBoxResolution.Text = "Change Resolution when Ingame";
+            this.checkBoxResolution.Text = UiLanguage.Translate("Change resolution in-game");
             this.checkBoxResolution.UseVisualStyleBackColor = true;
             this.checkBoxResolution.CheckedChanged += new System.EventHandler(this.checkBoxResolution_CheckedChanged);
             // 
