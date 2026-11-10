@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Text;
 using System.Windows.Forms;
 using vibrance.GUI.AMD.vendor;
@@ -18,6 +17,8 @@ namespace vibrance.GUI.AMD
         private readonly Dictionary<string, List<ResolutionModeWrapper>> _supportedResolutionModes;
         private VibranceInfo _vibranceInfo;
         private WinEventHook _hook;
+        private string _gameDisplay;
+        private bool _gameChangedAllDisplays;
 
         public AmdDynamicVibranceProxy(IAmdAdapter amdAdapter, List<ApplicationSetting> applicationSettings, Dictionary<string, List<ResolutionModeWrapper>> supportedResolutionModes)
         {
@@ -72,6 +73,8 @@ namespace vibrance.GUI.AMD
         public void SetVibranceWindowsLevel(int vibranceWindowsLevel)
         {
             _vibranceInfo.userVibranceSettingDefault = vibranceWindowsLevel;
+            if (_vibranceInfo.shouldRun && !WinEventHook.HasForegroundProfile(_applicationSettings))
+                ApplyDesktopVibrance();
         }
 
         public void SetVibranceIngameLevel(int vibranceIngameLevel)
@@ -90,12 +93,14 @@ namespace vibrance.GUI.AMD
             if (_hook != null)
                 _hook.WinEventHookHandler -= OnWinEventHook;
             ResolutionHelper.RestoreProfileResolutions();
-            _amdAdapter.SetSaturationOnAllDisplays(_vibranceInfo.userVibranceSettingDefault);
+            ApplyDesktopVibrance();
         }
 
         public void SetAffectPrimaryMonitorOnly(bool affectPrimaryMonitorOnly)
         {
             _vibranceInfo.affectPrimaryMonitorOnly = affectPrimaryMonitorOnly;
+            if (_vibranceInfo.shouldRun && !WinEventHook.HasForegroundProfile(_applicationSettings))
+                ApplyDesktopVibrance();
         }
 
         public VibranceInfo GetVibranceInfo()
@@ -105,45 +110,55 @@ namespace vibrance.GUI.AMD
 
         public GraphicsAdapter GraphicsAdapter { get; } = GraphicsAdapter.Amd;
 
-        [DllImport("user32.dll")]
-        public static extern IntPtr GetForegroundWindow();
-
         private void OnWinEventHook(object sender, WinEventHookEventArgs e)
         {
-            if (_applicationSettings.Count > 0)
+            if (!_vibranceInfo.shouldRun || e.Handle != WinEventHook.GetForegroundWindow())
+                return;
+
+            var profile = _applicationSettings.FirstOrDefault(x => string.Equals(x.Name, e.ProcessName, StringComparison.OrdinalIgnoreCase));
+            if (profile == null)
             {
-                ApplicationSetting applicationSetting = _applicationSettings.FirstOrDefault(x => string.Equals(x.Name, e.ProcessName, StringComparison.OrdinalIgnoreCase));
-                if (applicationSetting != null)
-                {
-                    Screen screen = Screen.FromHandle(e.Handle);
-                    var resolution = !_vibranceInfo.neverChangeResolution && applicationSetting.IsResolutionChangeNeeded
-                        ? applicationSetting.ResolutionSettings : null;
-                    ResolutionHelper.ApplyProfileResolution(screen.DeviceName, resolution, _supportedResolutionModes);
+                ResolutionHelper.RestoreProfileResolutions();
+                ApplyDesktopVibrance();
+                return;
+            }
 
-                    _amdAdapter.SetSaturationOnAllDisplays(_vibranceInfo.userVibranceSettingDefault);
-                    if (_vibranceInfo.affectPrimaryMonitorOnly)
-                    {
-                        _amdAdapter.SetSaturationOnDisplay(applicationSetting.IngameLevel, screen.DeviceName);
-                    }
-                    else
-                    {
-                        _amdAdapter.SetSaturationOnAllDisplays(applicationSetting.IngameLevel);
-                    }
-                }
-                else
-                {
-                    IntPtr processHandle = e.Handle;
-                    if (GetForegroundWindow() != processHandle)
-                        return;
+            Screen screen = Screen.FromHandle(e.Handle);
+            var resolution = !_vibranceInfo.neverChangeResolution && profile.IsResolutionChangeNeeded
+                ? profile.ResolutionSettings : null;
+            ResolutionHelper.ApplyProfileResolution(screen.DeviceName, resolution, _supportedResolutionModes);
 
-                    ResolutionHelper.RestoreProfileResolutions();
-                    _amdAdapter.SetSaturationOnAllDisplays(_vibranceInfo.userVibranceSettingDefault);
-                }
+            if (_vibranceInfo.affectPrimaryMonitorOnly)
+            {
+                if (_gameChangedAllDisplays || (_gameDisplay != null && _gameDisplay != screen.DeviceName))
+                    ApplyDesktopVibrance();
+                _amdAdapter.SetSaturationOnDisplay(profile.IngameLevel, screen.DeviceName);
+                _gameDisplay = screen.DeviceName;
             }
             else
             {
-                ResolutionHelper.RestoreProfileResolutions();
+                _amdAdapter.SetSaturationOnAllDisplays(profile.IngameLevel);
+                _gameChangedAllDisplays = true;
             }
+        }
+
+        private void ApplyDesktopVibrance()
+        {
+            int level = _vibranceInfo.userVibranceSettingDefault;
+            if (!_vibranceInfo.affectPrimaryMonitorOnly || _gameChangedAllDisplays)
+            {
+                _amdAdapter.SetSaturationOnAllDisplays(level);
+            }
+            else
+            {
+                string primary = Screen.PrimaryScreen?.DeviceName;
+                if (primary != null)
+                    _amdAdapter.SetSaturationOnDisplay(level, primary);
+                if (_gameDisplay != null && _gameDisplay != primary)
+                    _amdAdapter.SetSaturationOnDisplay(level, _gameDisplay);
+            }
+            _gameDisplay = null;
+            _gameChangedAllDisplays = false;
         }
     }
 }
