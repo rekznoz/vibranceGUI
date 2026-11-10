@@ -109,7 +109,7 @@ namespace vibrance.GUI.common
             dashboard.RowStyles.Add(new RowStyle(SizeType.Absolute, 72));
             dashboard.RowStyles.Add(new RowStyle(SizeType.Absolute, 120));
             dashboard.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
-            dashboard.RowStyles.Add(new RowStyle(SizeType.Absolute, 85));
+            dashboard.RowStyles.Add(new RowStyle(SizeType.Absolute, 60));
             dashboard.RowStyles.Add(new RowStyle(SizeType.Absolute, 42));
 
             var header = CreateTable(3, 2);
@@ -145,10 +145,8 @@ namespace vibrance.GUI.common
             trackBarWindowsLevel = CreateSlider("Desktop vibrance");
             trackBarWindowsLevel.Scroll += trackBarWindowsLevel_Scroll;
             desktop.Controls.Add(trackBarWindowsLevel, 0, 2);
-            labelWindowsLevel = CreateLabel("—", AccentColor, 29F, FontStyle.Bold, translate: false);
-            labelWindowsLevel.TextAlign = ContentAlignment.MiddleRight;
-            desktop.Controls.Add(labelWindowsLevel, 1, 0);
-            desktop.SetRowSpan(labelWindowsLevel, 3);
+            labelWindowsLevel = CreateVibranceValue("—");
+            desktop.Controls.Add(labelWindowsLevel, 1, 2);
             dashboard.Controls.Add(CreateCard(desktop, new Padding(0, 0, 0, 12)), 0, 1);
 
             var workspace = CreateTable(2, 1);
@@ -222,13 +220,11 @@ namespace vibrance.GUI.common
             editor.Controls.Add(profileEditorTitle, 0, 0);
             editor.SetColumnSpan(profileEditorTitle, 2);
             editor.Controls.Add(CreateLabel("In-game vibrance", MutedColor), 0, 1);
-            profileVibranceValue = CreateLabel("", AccentColor, 13F, FontStyle.Bold, translate: false);
-            profileVibranceValue.TextAlign = ContentAlignment.MiddleRight;
-            editor.Controls.Add(profileVibranceValue, 1, 1);
+            profileVibranceValue = CreateVibranceValue("");
+            editor.Controls.Add(profileVibranceValue, 1, 2);
             profileVibranceSlider = CreateSlider("In-game vibrance");
             profileVibranceSlider.ValueChanged += profileVibranceSlider_ValueChanged;
             editor.Controls.Add(profileVibranceSlider, 0, 2);
-            editor.SetColumnSpan(profileVibranceSlider, 2);
             profileChangeResolution = CreateCheckBox("Change resolution in-game");
             profileChangeResolution.CheckedChanged += profileChangeResolution_CheckedChanged;
             editor.Controls.Add(profileChangeResolution, 0, 3);
@@ -261,15 +257,11 @@ namespace vibrance.GUI.common
             workspace.Controls.Add(CreateCard(editorArea, Padding.Empty), 1, 0);
             dashboard.Controls.Add(workspace, 0, 2);
 
-            var preferences = CreateTable(3, 2);
+            var preferences = CreateTable(3, 1);
             preferences.Padding = new Padding(16, 8, 16, 8);
             for (int column = 0; column < 3; column++)
                 preferences.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F / 3));
-            preferences.RowStyles.Add(new RowStyle(SizeType.Absolute, 25));
             preferences.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
-            var preferencesHeading = CreateLabel("Preferences", TextColor, 12F, FontStyle.Bold);
-            preferences.Controls.Add(preferencesHeading, 0, 0);
-            preferences.SetColumnSpan(preferencesHeading, 3);
             checkBoxAutostart = CreateCheckBox("Start with Windows");
             checkBoxPrimaryMonitorOnly = CreateCheckBox("Primary monitor only");
             checkBoxNeverChangeResolutions = CreateCheckBox("Keep Windows resolution");
@@ -279,9 +271,9 @@ namespace vibrance.GUI.common
             var toolTip = new ToolTip(components);
             BindTranslation("Limit vibrance changes to one monitor.", text => toolTip.SetToolTip(checkBoxPrimaryMonitorOnly, text));
             BindTranslation("Prevent game profiles from changing the display resolution.", text => toolTip.SetToolTip(checkBoxNeverChangeResolutions, text));
-            preferences.Controls.Add(checkBoxAutostart, 0, 1);
-            preferences.Controls.Add(checkBoxPrimaryMonitorOnly, 1, 1);
-            preferences.Controls.Add(checkBoxNeverChangeResolutions, 2, 1);
+            preferences.Controls.Add(checkBoxAutostart, 0, 0);
+            preferences.Controls.Add(checkBoxPrimaryMonitorOnly, 1, 0);
+            preferences.Controls.Add(checkBoxNeverChangeResolutions, 2, 0);
             dashboard.Controls.Add(CreateCard(preferences, new Padding(0, 12, 0, 0)), 0, 3);
 
             var footer = CreateTable(5, 1);
@@ -426,13 +418,22 @@ namespace vibrance.GUI.common
             return image;
         }
 
+        private Label CreateVibranceValue(string text)
+        {
+            var label = CreateLabel(text, AccentColor, 18F, FontStyle.Bold, translate: false);
+            label.TextAlign = ContentAlignment.MiddleRight;
+            label.AutoEllipsis = false;
+            return label;
+        }
+
         private KryptonTrackBar CreateSlider(string name)
         {
             var slider = new KryptonTrackBar
             {
-                Dock = DockStyle.Fill,
+                Anchor = AnchorStyles.Left | AnchorStyles.Right,
                 Margin = Padding.Empty,
                 AutoSize = false,
+                Height = 22,
                 Maximum = 63,
                 TickStyle = TickStyle.None,
                 TrackBarSize = PaletteTrackBarSize.Medium,
