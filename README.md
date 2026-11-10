@@ -1,10 +1,14 @@
 # vibranceGUI
 
+**Este repositorio es un fork independiente de vibranceGUI, creado originalmente por juvlarN.** [Proyecto original en GitHub](https://github.com/juv/vibranceGUI) · [juvlarN en Twitter/X](https://twitter.com/juvlarN)
+
 Ajusta automáticamente la saturación de Windows al jugar a Counter-Strike 2 u otros juegos. vibranceGUI detecta la aplicación en primer plano y aplica el perfil correspondiente mediante **Digital Vibrance** en NVIDIA o el control de **saturación** en AMD.
 
-## Qué ha mejorado
+## Qué ha mejorado en este fork
 
-- **Interfaz oscura con Krypton Toolkit.** Ventana redimensionable, tarjetas redondeadas, acentos lavanda y desplegables con flechas discretas. Los interruptores ocupan una sola fila para dejar más espacio al editor. El valor de saturación aparece a la derecha de cada barra y se lee completo al 100 %.
+- **Interfaz oscura con Krypton Toolkit.** Ventana redimensionable, tarjetas redondeadas, acentos lavanda y desplegables con flechas discretas. Los interruptores ocupan una sola fila para dejar más espacio al editor.
+- **Porcentajes editables.** Escribe el valor de saturación del escritorio o del juego en el campo junto a su barra. Pulsa **Enter** o sal del campo para aplicarlo. En los perfiles, pulsa **Guardar** para conservar el cambio.
+- **Pausa rápida de la saturación.** Pulsa **Activo** para volver al nivel neutro y **Inactivo** para recuperar la saturación configurada. Al cerrar vibranceGUI, la saturación vuelve al nivel neutro y se conservan tus ajustes.
 - **Editor de perfiles integrado.** Al seleccionar un juego, puedes ajustar su saturación y resolución en el panel lateral. Añade un juego que esté abierto o busca su ejecutable. Guarda los cambios del perfil o cancela para recuperar los valores guardados.
 - **Español, inglés y portugués.** El selector cambia el idioma al momento y recuerda la elección al volver a abrir el programa.
 - **Cambios de pantalla temporales.** La resolución del perfil se aplica sin escribirla en el registro de Windows. vibranceGUI guarda el modo anterior de cada monitor y lo restaura al salir del perfil, incluso al pasar a otro monitor, o al cerrar el programa. En NVIDIA, el modo del perfil también se aplica si la saturación ya coincide.
@@ -50,6 +54,9 @@ El SHA-256 esperado es `0F229F79934F21617337C28915A9449F7B2395B20D7FB0E4A02D1427
 
 ## Contribuir
 
-Puedes abrir una incidencia o enviar un pull request. Si informas de un fallo de pantalla, incluye el modelo de GPU, la versión del controlador, los monitores conectados y los pasos para reproducirlo.
+Puedes abrir una incidencia o enviar un pull request en este fork. Si informas de un fallo de pantalla, incluye el modelo de GPU, la versión del controlador, los monitores conectados y los pasos para reproducirlo.
 
-[Proyecto original](https://github.com/juv/vibranceGUI) · [Contacto original de NVIDIA](https://twitter.com/juvlarN) · [Contacto original de AMD](https://twitter.com/juRiiir3)
+## Créditos del proyecto original
+
+- **juvlarN**, creador de vibranceGUI y contacto original para NVIDIA. [GitHub](https://github.com/juv) · [Twitter/X](https://twitter.com/juvlarN)
+- **juRiiir3**, contacto original para AMD. [Twitter/X](https://twitter.com/juRiiir3)
