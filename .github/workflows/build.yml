@@ -23,12 +23,25 @@ jobs:
           if (!(Test-Path -LiteralPath 'vibrance.GUI/bin/x86/Release/Krypton.Toolkit.dll')) {
             throw 'Krypton.Toolkit.dll is missing from the build output.'
           }
+      - name: Package Release x86
+        shell: pwsh
+        run: |
+          $output = (Resolve-Path 'vibrance.GUI/bin/x86/Release').Path
+          $package = Join-Path $env:RUNNER_TEMP 'vibranceGUI-Release-x86'
+          $lib = Join-Path $package 'lib'
+          New-Item -ItemType Directory -Path $lib -Force | Out-Null
+          foreach ($name in 'vibrance.GUI.exe', 'vibrance.GUI.exe.config') {
+            Copy-Item -LiteralPath (Join-Path $output $name) -Destination $package
+          }
+          Get-ChildItem -LiteralPath $output -Recurse -File -Filter '*.dll' | ForEach-Object {
+            $relativePath = [IO.Path]::GetRelativePath($output, $_.FullName)
+            $destination = Join-Path $lib $relativePath
+            New-Item -ItemType Directory -Path (Split-Path -Parent $destination) -Force | Out-Null
+            Copy-Item -LiteralPath $_.FullName -Destination $destination
+          }
       - name: Upload Release x86
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: vibranceGUI-Release-x86
-          path: |
-            vibrance.GUI/bin/x86/Release/vibrance.GUI.exe
-            vibrance.GUI/bin/x86/Release/vibrance.GUI.exe.config
-            vibrance.GUI/bin/x86/Release/**/*.dll
+          path: ${{ runner.temp }}/vibranceGUI-Release-x86/
           if-no-files-found: error
