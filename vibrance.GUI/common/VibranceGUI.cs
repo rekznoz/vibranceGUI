@@ -28,6 +28,7 @@ namespace vibrance.GUI.common
         private bool _allowVisible;
         private readonly List<Action> _languageBindings = new List<Action>();
         private string _statusText = "Starting";
+        private bool _vibranceEnabled = true;
         private ListViewItem _editingProfile;
         private bool _settingsLoaded;
         private bool _settingsDirty;
@@ -67,8 +68,6 @@ namespace vibrance.GUI.common
             }
             _applicationSettings = new List<ApplicationSetting>();
             _v = getProxy(_applicationSettings, supportedResolutionModes);
-
-            backgroundWorker.WorkerReportsProgress = true;
 
             backgroundWorker.RunWorkerAsync();
         }
@@ -145,7 +144,8 @@ namespace vibrance.GUI.common
                 _v.SetShouldRun(true);
                 _v.SetVibranceWindowsLevel(vibranceWindowsLevel);
                 SetGuiEnabledFlag(true);
-                backgroundWorker.ReportProgress(1);
+                SetStatusText("●  Active", ActiveColor);
+                statusButton.Enabled = true;
             });
         }
 
@@ -190,24 +190,20 @@ namespace vibrance.GUI.common
                 ForceSaveVibranceSettings();
         }
 
-        private void backgroundWorker_ProgressChanged(object sender, ProgressChangedEventArgs e)
+        private void statusButton_Click(object sender, EventArgs e)
         {
-            if (e.ProgressPercentage == 1)
-            {
-                SetStatusText("●  Active");
-                this.statusLabel.ForeColor = ActiveColor;
-            }
-            else if (e.ProgressPercentage == 2)
-            {
-                SetStatusText("NVAPI unloaded");
-                this.statusLabel.ForeColor = WarningColor;
-            }
+            bool enabled = !_vibranceEnabled;
+            _v.SetVibranceEnabled(enabled);
+            _vibranceEnabled = enabled;
+            SetStatusText(enabled ? "●  Active" : "●  Inactive", enabled ? ActiveColor : MutedColor);
         }
 
-        private void SetStatusText(string english)
+        private void SetStatusText(string english, Color color)
         {
             _statusText = english;
-            statusLabel.Text = UiLanguage.Translate(english);
+            statusButton.Text = UiLanguage.Translate(english);
+            statusButton.StateCommon.Content.ShortText.Color1 = color;
+            statusButton.StateCommon.Content.ShortText.Color2 = color;
         }
 
         private void BindTranslation(string english, Action<string> apply)
@@ -226,7 +222,7 @@ namespace vibrance.GUI.common
             bool saved = UiLanguage.Select(index);
             foreach (Action update in _languageBindings)
                 update();
-            statusLabel.Text = UiLanguage.Translate(_statusText);
+            statusButton.Text = UiLanguage.Translate(_statusText);
             UpdateProfileEditorTitle();
             RefreshProfileResolutionLabels();
 
@@ -340,8 +336,8 @@ namespace vibrance.GUI.common
         {
             try
             {
-                SetStatusText("Closing...");
-                this.statusLabel.ForeColor = WarningColor;
+                statusButton.Enabled = false;
+                SetStatusText("Closing...", WarningColor);
                 this.Update();
                 if (_v != null && _v.GetVibranceInfo().isInitialized)
                 {
