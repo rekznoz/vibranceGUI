@@ -17,7 +17,7 @@ On Windows, install Visual Studio 2022 or its Build Tools with the .NET desktop 
 msbuild vibrance.GUI.sln /restore /m /p:Configuration=Release /p:Platform=x86
 ```
 
-The executable, configuration and UI dependencies are in `vibrance.GUI\bin\x86\Release\`. Keep them together when copying the app. GitHub Actions restores Krypton Toolkit from NuGet and packages the Release x86 build. The NVIDIA bridge requires an x86 executable, including on 64-bit Windows.
+Local builds output to `vibrance.GUI\bin\x86\Release\`. The GitHub Actions ZIP puts the dependency DLLs in `lib`. Extract the whole ZIP and keep `lib` and `vibrance.GUI.exe.config` alongside the executable. The NVIDIA bridge requires an x86 executable, including on 64-bit Windows.
 
 ### NVIDIA bridge provenance
 
