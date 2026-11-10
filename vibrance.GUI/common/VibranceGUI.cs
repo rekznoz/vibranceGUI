@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Windows.Forms;
 using Krypton.Toolkit;
@@ -13,7 +14,7 @@ using MessageBox = System.Windows.Forms.MessageBox;
 
 namespace vibrance.GUI.common
 {
-    public partial class VibranceGUI : KryptonForm
+    public partial class VibranceGUI : Form
     {
         private readonly int _defaultWindowsLevel;
         private readonly int _minTrackBarValue;
@@ -85,6 +86,20 @@ namespace vibrance.GUI.common
                 }
             }
             base.SetVisibleCore(value);
+        }
+
+        [DllImport("dwmapi.dll")]
+        private static extern int DwmSetWindowAttribute(IntPtr window, int attribute, ref int value, int size);
+
+        protected override void OnHandleCreated(EventArgs e)
+        {
+            base.OnHandleCreated(e);
+            if (!SystemInformation.HighContrast)
+            {
+                const int useImmersiveDarkMode = 20;
+                int enabled = 1;
+                DwmSetWindowAttribute(Handle, useImmersiveDarkMode, ref enabled, sizeof(int));
+            }
         }
 
         public void SetAllowVisible(bool value)
