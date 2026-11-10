@@ -19,7 +19,7 @@ namespace vibrance.GUI.common
         private readonly int _minTrackBarValue;
         private readonly int _maxTrackBarValue;
         private readonly int _defaultIngameValue;
-        private readonly Func<int, string> _resolveLabelLevel;
+        private readonly Func<int, int> _levelToPercentage;
         private readonly IVibranceProxy _v;
         private IRegistryController _registryController;
         private const string AppName = "vibranceGUI";
@@ -41,12 +41,12 @@ namespace vibrance.GUI.common
             int minTrackBarValue,
             int maxTrackBarValue,
             int defaultIngameValue,
-            Func<int, string> resolveLabelLevel)
+            Func<int, int> levelToPercentage)
         {
             _minTrackBarValue = minTrackBarValue;
             _maxTrackBarValue = maxTrackBarValue;
             _defaultIngameValue = defaultIngameValue;
-            _resolveLabelLevel = resolveLabelLevel;
+            _levelToPercentage = levelToPercentage;
             _allowVisible = true;
 
             InitializeComponent();
@@ -54,7 +54,7 @@ namespace vibrance.GUI.common
             trackBarWindowsLevel.Minimum = minTrackBarValue;
             trackBarWindowsLevel.Maximum = maxTrackBarValue;
             trackBarWindowsLevel.Value = defaultWindowsLevel;
-            labelWindowsLevel.Text = _resolveLabelLevel(defaultWindowsLevel);
+            ShowVibranceValue(windowsVibranceValue, trackBarWindowsLevel);
             profileVibranceSlider.Maximum = maxTrackBarValue;
             profileVibranceSlider.Minimum = minTrackBarValue;
 
@@ -151,6 +151,7 @@ namespace vibrance.GUI.common
 
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {
+            CommitVibranceInput(windowsVibranceValue, trackBarWindowsLevel);
             if (_settingsDirty)
                 ForceSaveVibranceSettings(e.CloseReason == CloseReason.UserClosing);
 
@@ -170,8 +171,29 @@ namespace vibrance.GUI.common
         private void trackBarWindowsLevel_ValueChanged(object sender, EventArgs e)
         {
             _v?.SetVibranceWindowsLevel(trackBarWindowsLevel.Value);
-            labelWindowsLevel.Text = _resolveLabelLevel(trackBarWindowsLevel.Value);
+            ShowVibranceValue(windowsVibranceValue, trackBarWindowsLevel);
             QueueSettingsSave();
+        }
+
+        private void ShowVibranceValue(TextBox input, KryptonTrackBar slider)
+        {
+            input.Text = _levelToPercentage(slider.Value) + "%";
+        }
+
+        private void CommitVibranceInput(TextBox input, KryptonTrackBar slider)
+        {
+            string text = input.Text.Trim();
+            if (text.EndsWith("%", StringComparison.Ordinal))
+                text = text.Substring(0, text.Length - 1);
+
+            if (int.TryParse(text, out int percentage) && percentage != _levelToPercentage(slider.Value))
+            {
+                percentage = Math.Max(percentage, _levelToPercentage(slider.Minimum));
+                // Choose the highest matching level because NVIDIA can display the same percentage for adjacent levels.
+                slider.Value = Enumerable.Range(slider.Minimum, slider.Maximum - slider.Minimum + 1)
+                    .Last(level => _levelToPercentage(level) <= percentage);
+            }
+            ShowVibranceValue(input, slider);
         }
 
         private void QueueSettingsSave()
@@ -322,6 +344,7 @@ namespace vibrance.GUI.common
             this.Invoke((MethodInvoker)delegate
             {
                 this.trackBarWindowsLevel.Enabled = flag;
+                this.windowsVibranceValue.Enabled = flag;
                 this.checkBoxAutostart.Enabled = flag;
                 this.checkBoxPrimaryMonitorOnly.Enabled = flag;
                 this.checkBoxNeverChangeResolutions.Enabled = flag;
@@ -392,9 +415,8 @@ namespace vibrance.GUI.common
             if (this.IsHandleCreated)
             {
                 //no null check needed, SettingsController will always return matching values.
-                labelWindowsLevel.Text = _resolveLabelLevel(vibranceWindowsLevel);
-
                 trackBarWindowsLevel.Value = vibranceWindowsLevel;
+                ShowVibranceValue(windowsVibranceValue, trackBarWindowsLevel);
                 checkBoxPrimaryMonitorOnly.Checked = affectPrimaryMonitorOnly;
                 checkBoxNeverChangeResolutions.Checked = neverSwitchResolution;
                 foreach (ApplicationSetting application in _applicationSettings.ToList())
@@ -555,7 +577,7 @@ namespace vibrance.GUI.common
             UpdateProfileEditorTitle();
             int level = setting?.IngameLevel ?? _defaultIngameValue;
             profileVibranceSlider.Value = Math.Max(_minTrackBarValue, Math.Min(_maxTrackBarValue, level));
-            profileVibranceSlider_ValueChanged(profileVibranceSlider, EventArgs.Empty);
+            ShowVibranceValue(profileVibranceValue, profileVibranceSlider);
 
             profileResolution.Items.Clear();
             if (_supportedResolutionList != null)
@@ -582,7 +604,7 @@ namespace vibrance.GUI.common
 
         private void profileVibranceSlider_ValueChanged(object sender, EventArgs e)
         {
-            profileVibranceValue.Text = _resolveLabelLevel(profileVibranceSlider.Value);
+            ShowVibranceValue(profileVibranceValue, profileVibranceSlider);
         }
 
         private void profileChangeResolution_CheckedChanged(object sender, EventArgs e)
@@ -592,6 +614,7 @@ namespace vibrance.GUI.common
 
         private void saveProfile_Click(object sender, EventArgs e)
         {
+            CommitVibranceInput(profileVibranceValue, profileVibranceSlider);
             string path = (string)_editingProfile.Tag;
             var resolution = (ResolutionModeWrapper)profileResolution.SelectedItem;
             var setting = new ApplicationSetting(_editingProfile.Text, path, profileVibranceSlider.Value,
