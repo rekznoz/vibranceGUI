@@ -32,6 +32,7 @@ namespace vibrance.GUI.common
         const string SzKeyNameRefreshRate = "refreshRate";
         const string SzKeyNameAffectPrimaryMonitorOnly = "affectPrimaryMonitorOnly";
         const string SzKeyNameNeverSwitchResolution = "neverSwitchResolution";
+        const string SzKeyNameLanguage = "language";
 
         private string _fileName = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData).ToString() + "\\vibranceGUI\\vibranceGUI.ini";
         private string _fileNameApplicationSettings = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData).ToString() + "\\vibranceGUI\\applicationData.xml";
@@ -93,6 +94,18 @@ namespace vibrance.GUI.common
                 Trace.TraceError("Could not save vibranceGUI setting: {0}", ex);
                 return false;
             }
+        }
+
+        internal string ReadLanguage()
+        {
+            var language = new StringBuilder(8);
+            GetPrivateProfileString(SzSectionName, SzKeyNameLanguage, "en", language, (uint)language.Capacity, _fileName);
+            return language.ToString();
+        }
+
+        internal bool SaveLanguage(string language)
+        {
+            return SetVibranceSetting(SzKeyNameLanguage, language);
         }
 
         public void ReadVibranceSettings(GraphicsAdapter graphicsAdapter, out int vibranceWindowsLevel, out bool affectPrimaryMonitorOnly, out bool neverSwitchResolution, out List<ApplicationSetting> applicationSettings)
