@@ -27,6 +27,8 @@ namespace vibrance.GUI.common
         private const string PaypalDonationLink = "https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=JDQFNKNNEW356";
 
         private bool _allowVisible;
+        private bool _settingsLoaded;
+        private bool _settingsDirty;
         private List<ApplicationSetting> _applicationSettings;
         private readonly List<ResolutionModeWrapper> _supportedResolutionList;
 
@@ -62,7 +64,6 @@ namespace vibrance.GUI.common
             _v = getProxy(_applicationSettings, supportedResolutionModes);
 
             backgroundWorker.WorkerReportsProgress = true;
-            settingsBackgroundWorker.WorkerReportsProgress = true;
 
             backgroundWorker.RunWorkerAsync();
         }
@@ -148,6 +149,9 @@ namespace vibrance.GUI.common
 
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {
+            if (_settingsDirty)
+                ForceSaveVibranceSettings(e.CloseReason == CloseReason.UserClosing);
+
             CleanUp();
         }
 
@@ -160,30 +164,23 @@ namespace vibrance.GUI.common
         {
             _v.SetVibranceWindowsLevel(trackBarWindowsLevel.Value);
             labelWindowsLevel.Text = _resolveLabelLevel(trackBarWindowsLevel.Value);
-            if (!settingsBackgroundWorker.IsBusy)
-            {
-                settingsBackgroundWorker.RunWorkerAsync();
-            }
+            QueueSettingsSave();
         }
 
-        private void settingsBackgroundWorker_DoWork(object sender, DoWorkEventArgs e)
+        private void QueueSettingsSave()
         {
-            Thread.Sleep(5000);
-            ForceSaveVibranceSettings();
+            if (!_settingsLoaded)
+                return;
+
+            _settingsDirty = true;
+            settingsSaveTimer.Stop();
+            settingsSaveTimer.Start();
         }
 
-        private void ForceSaveVibranceSettings()
+        private void settingsSaveTimer_Tick(object sender, EventArgs e)
         {
-            int windowsLevel = 0;
-            bool affectPrimaryMonitorOnly = false;
-            bool neverSwitchResolution = false;
-            this.Invoke((MethodInvoker)delegate
-            {
-                windowsLevel = trackBarWindowsLevel.Value;
-                affectPrimaryMonitorOnly = checkBoxPrimaryMonitorOnly.Checked;
-                neverSwitchResolution = checkBoxNeverChangeResolutions.Checked;
-            });
-            SaveVibranceSettings(windowsLevel, affectPrimaryMonitorOnly, neverSwitchResolution);
+            if (_settingsDirty)
+                ForceSaveVibranceSettings();
         }
 
         private void backgroundWorker_ProgressChanged(object sender, ProgressChangedEventArgs e)
@@ -197,10 +194,6 @@ namespace vibrance.GUI.common
             {
                 this.statusLabel.Text = $"NVAPI Unloaded: {e.UserState}";
             }
-        }
-
-        private void settingsBackgroundWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
-        {
         }
 
         private void notifyIcon_MouseClick(object sender, MouseEventArgs e)
@@ -223,10 +216,7 @@ namespace vibrance.GUI.common
             }
 
             this._v.SetAffectPrimaryMonitorOnly(this.checkBoxPrimaryMonitorOnly.Checked);
-            if (!this.settingsBackgroundWorker.IsBusy)
-            {
-                this.settingsBackgroundWorker.RunWorkerAsync();
-            }
+            QueueSettingsSave();
         }
         
         private void checkBoxNeverChangeResolutions_CheckedChanged(object sender, EventArgs e)
@@ -237,10 +227,7 @@ namespace vibrance.GUI.common
             }
 
             this._v.SetNeverSwitchResolution(this.checkBoxNeverChangeResolutions.Checked);
-            if (!this.settingsBackgroundWorker.IsBusy)
-            {
-                this.settingsBackgroundWorker.RunWorkerAsync();
-            }
+            QueueSettingsSave();
         }
 
         private void checkBoxAutostart_CheckedChanged(object sender, EventArgs e)
@@ -384,19 +371,26 @@ namespace vibrance.GUI.common
                         this.listApplications.Items.Add(lvi);
                     }
                 }
+                _settingsLoaded = true;
             }
         }
 
-        private void SaveVibranceSettings(int windowsLevel, bool affectPrimaryMonitorOnly, bool neverSwitchResolution)
+        private void ForceSaveVibranceSettings(bool showError = true)
         {
+            settingsSaveTimer.Stop();
             SettingsController settingsController = new SettingsController();
-
-            settingsController.SetVibranceSettings(
-                windowsLevel.ToString(),
-                affectPrimaryMonitorOnly.ToString(),
-                neverSwitchResolution.ToString(),
+            _settingsDirty = !settingsController.SetVibranceSettings(
+                trackBarWindowsLevel.Value.ToString(),
+                checkBoxPrimaryMonitorOnly.Checked.ToString(),
+                checkBoxNeverChangeResolutions.Checked.ToString(),
                 _applicationSettings
             );
+
+            if (_settingsDirty && showError)
+            {
+                MessageBox.Show(this, "Your settings could not be saved. Check that the settings folder is writable.",
+                    AppName, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
         }
 
         private void buttonPaypal_Click(object sender, EventArgs e)
