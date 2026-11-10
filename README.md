@@ -1,42 +1,53 @@
 # vibranceGUI
 
-VibranceGUI is a Windows Utility written in C# that automates NVIDIAs Digitial Vibrance Control and AMDs Saturation for Games, e.g. Counter-Strike: Global Offensive by utilizing native graphic card driver APIs. 
+Ajusta automáticamente la saturación de Windows al jugar a Counter-Strike 2 u otros juegos. vibranceGUI detecta la aplicación en primer plano y aplica el perfil correspondiente mediante **Digital Vibrance** en NVIDIA o el control de **saturación** en AMD.
 
-As of 18th April 2015, vibranceGUI also fully supports AMD graphic cards. Prior to that, vibanceGUI was developed to support NVIDIA graphic cards only. 
+## Qué ha mejorado
 
-Note that NVIDIA Laptop GPUs are not supported because their drivers do not contain the needed functionality.
-Intel did not publish an API for their integrated GPUs and are not supported. 
+- **Interfaz oscura con Krypton Toolkit.** Ventana redimensionable, tarjetas redondeadas, acentos lavanda y desplegables con flechas discretas. Los interruptores ocupan una sola fila para dejar más espacio al editor. El valor de saturación aparece a la derecha de cada barra y se lee completo al 100 %.
+- **Editor de perfiles integrado.** Al seleccionar un juego, puedes ajustar su saturación y resolución en el panel lateral. Añade un juego que esté abierto o busca su ejecutable. Guarda los cambios del perfil o cancela para recuperar los valores guardados.
+- **Español, inglés y portugués.** El selector cambia el idioma al momento y recuerda la elección al volver a abrir el programa.
+- **Cambios de pantalla temporales.** La resolución del perfil se aplica sin escribirla en el registro de Windows. vibranceGUI guarda el modo anterior de cada monitor y lo restaura al salir del perfil, incluso al pasar a otro monitor, o al cerrar el programa. En NVIDIA, el modo del perfil también se aplica si la saturación ya coincide.
+- **Guardado más fiable.** Los ajustes del escritorio se guardan automáticamente. Los perfiles se escriben en un XML temporal y el archivo anterior solo se sustituye cuando el nuevo está completo. La interfaz muestra un aviso si falla el guardado.
+- **Detección de GPU.** Windows indica qué adaptadores AMD y NVIDIA están presentes y operativos antes de que vibranceGUI compruebe sus controladores. Si ambos fabricantes están disponibles, la aplicación avisa de que esta versión solo puede usar uno a la vez.
+- **Compilación en Windows x86.** Migración de .NET Framework 4.0 a 4.8 y retirada de Fody y Costura. GitHub Actions restaura las dependencias de NuGet, verifica el SHA-256 de la DLL de NVIDIA y publica el ZIP con las demás DLL en la carpeta `lib`.
 
-More information and binary download available at: http://vibrancegui.com/
+## Descargar y abrir
 
-## Compiling
+1. Abre [Actions → Windows build](https://github.com/rekznoz/vibranceGUI/actions/workflows/build.yml).
+2. Entra en una ejecución completada correctamente y descarga **vibranceGUI-Release-x86** desde **Artifacts**. Si tienes acceso de escritura al repositorio, puedes iniciar una compilación con **Run workflow**.
+3. Extrae el ZIP completo y abre **vibrance.GUI.exe**. Mantén la carpeta **lib** y el archivo **vibrance.GUI.exe.config** junto al ejecutable.
 
-On Windows, install Visual Studio 2022 or its Build Tools with the .NET desktop build tools and the [.NET Framework 4.8 Developer Pack](https://learn.microsoft.com/en-us/dotnet/framework/install/guide-for-developers). Open a Developer Command Prompt and run:
+## Configurar un perfil de CS2
+
+1. Abre CS2 y pulsa **Añadir juego activo** en vibranceGUI. También puedes pulsar **Buscar…** y seleccionar el ejecutable de CS2.
+2. Selecciona el perfil y ajusta **Saturación en el juego**. Si juegas en ventana o sin bordes, puedes configurar también un modo de pantalla.
+3. Pulsa **Guardar** antes de seleccionar otro juego. **Mantener resolución** tiene prioridad sobre los modos de pantalla configurados en los perfiles.
+
+La saturación del escritorio se configura por separado y se aplica cuando no hay un perfil activo. La aplicación admite NVIDIA y AMD mediante sus controladores. El soporte en portátiles NVIDIA depende de que el controlador exponga Digital Vibrance. Las GPU Intel quedan fuera del alcance de esta versión. La detección y la aplicación del perfil de CS2 se han probado en un equipo NVIDIA.
+
+## Compilar en Windows
+
+Instala Visual Studio 2022 o Build Tools 2022 con **Desarrollo de escritorio de .NET** y el **Developer Pack de .NET Framework 4.8**. Abre una consola de desarrollador de Visual Studio en la raíz del repositorio. [Developer Pack de Microsoft](https://learn.microsoft.com/en-us/dotnet/framework/install/guide-for-developers)
 
 ```bat
 msbuild vibrance.GUI.sln /restore /m /p:Configuration=Release /p:Platform=x86
 ```
 
-Local builds output to `vibrance.GUI\bin\x86\Release\`. The GitHub Actions ZIP puts the dependency DLLs in `lib`. Extract the whole ZIP and keep `lib` and `vibrance.GUI.exe.config` alongside the executable. The NVIDIA bridge requires an x86 executable, including on 64-bit Windows.
+El resultado local está en `vibrance.GUI\bin\x86\Release\`. La DLL de NVIDIA requiere un proceso x86, también en Windows de 64 bits.
 
-### NVIDIA bridge provenance
+### Procedencia de la DLL de NVIDIA
 
-The build embeds `vibrance.GUI/NVIDIA/vibranceDLL.dll` and checks its SHA-256 before compiling. The bundled DLL was added in vibranceGUI commit `5ee9adef0e8b04efbb1a00f53f231145cdfedefd`, whose message records static linking of the C++ runtime with `/MT`. The author publishes the C/C++ project separately, with build instructions for x86 and Unicode. [vibranceDLL source](https://github.com/juv/vibranceDLL)
+El ejecutable incorpora `vibrance.GUI/NVIDIA/vibranceDLL.dll`. El commit `5ee9adef0e8b04efbb1a00f53f231145cdfedefd` introdujo los bytes actuales y registra el uso de `/MT` para enlazar estáticamente el runtime de C++. El autor publicó el proyecto C/C++ por separado, con instrucciones para compilar en x86 y Unicode. [Código fuente de vibranceDLL](https://github.com/juv/vibranceDLL)
 
 ```powershell
 Get-FileHash .\vibrance.GUI\NVIDIA\vibranceDLL.dll -Algorithm SHA256
 ```
 
-The expected SHA-256 is `0F229F79934F21617337C28915A9449F7B2395B20D7FB0E4A02D14277163CEA0`. The DLL has no Authenticode signature. The hash identifies the checked-in bytes. The exact source revision and toolchain that produced those bytes have not been verified.
+El SHA-256 esperado es `0F229F79934F21617337C28915A9449F7B2395B20D7FB0E4A02D14277163CEA0`. La DLL carece de firma Authenticode. El hash identifica los bytes incluidos y sigue pendiente verificar la revisión del código fuente y la cadena de herramientas que los generó.
 
-## Contributing
+## Contribuir
 
-Every contribution is greatly appreciated. Do not hesitate to submit every issue and pull request that comes to your mind.
+Puedes abrir una incidencia o enviar un pull request. Si informas de un fallo de pantalla, incluye el modelo de GPU, la versión del controlador, los monitores conectados y los pasos para reproducirlo.
 
-## Contact
-
-NVIDIA support: https://twitter.com/juvlarN
-  
-AMD support: https://twitter.com/juRiiir3
-
-`Please do not add either of us at Steam to ask questions about vibranceGUI. Thank you.`
+[Proyecto original](https://github.com/juv/vibranceGUI) · [Contacto original de NVIDIA](https://twitter.com/juvlarN) · [Contacto original de AMD](https://twitter.com/juRiiir3)
