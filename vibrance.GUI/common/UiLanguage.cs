@@ -26,7 +26,6 @@ namespace vibrance.GUI.common
             { "No game profiles yet\r\nAdd a running game or browse for an executable.",
                 new[] { "Aún no hay perfiles de juego\r\nAñade un juego activo o busca un ejecutable.",
                     "Ainda não há perfis de jogo\r\nAdiciona um jogo ativo ou procura um executável." } },
-            { "Preferences", new[] { "Preferencias", "Preferências" } },
             { "Start with Windows", new[] { "Iniciar con Windows", "Iniciar com o Windows" } },
             { "Primary monitor only", new[] { "Solo monitor principal", "Só o monitor principal" } },
             { "Keep Windows resolution", new[] { "Mantener resolución", "Manter resolução" } },
