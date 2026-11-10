@@ -30,6 +30,7 @@ namespace vibrance.GUI.common
         private bool _allowVisible;
         private readonly List<Action> _languageBindings = new List<Action>();
         private string _statusText = "Starting";
+        private ListViewItem _editingProfile;
         private bool _settingsLoaded;
         private bool _settingsDirty;
         private List<ApplicationSetting> _applicationSettings;
@@ -54,6 +55,8 @@ namespace vibrance.GUI.common
 
             trackBarWindowsLevel.Minimum = minTrackBarValue;
             trackBarWindowsLevel.Maximum = maxTrackBarValue;
+            profileVibranceSlider.Maximum = maxTrackBarValue;
+            profileVibranceSlider.Minimum = minTrackBarValue;
 
             var supportedResolutionModes = new Dictionary<string, List<ResolutionModeWrapper>>(StringComparer.OrdinalIgnoreCase);
             foreach (Screen screen in Screen.AllScreens)
@@ -237,6 +240,8 @@ namespace vibrance.GUI.common
             foreach (Action update in _languageBindings)
                 update();
             statusLabel.Text = UiLanguage.Translate(_statusText);
+            UpdateProfileEditorTitle();
+            profileResolution.Invalidate();
 
             foreach (var explorer in Application.OpenForms.OfType<ProcessExplorer>())
                 explorer.RefreshLanguage();
@@ -245,17 +250,18 @@ namespace vibrance.GUI.common
                 ShowSaveError();
         }
 
-        private void languageSelector_DrawItem(object sender, DrawItemEventArgs e)
+        private void dashboardCombo_DrawItem(object sender, DrawItemEventArgs e)
         {
             bool selected = (e.State & DrawItemState.Selected) != 0;
-            using (var background = new SolidBrush(selected ? BorderColor : ButtonColor))
+            using (var background = new SolidBrush(!((Control)sender).Enabled ? InsetColor : selected ? BorderColor : ButtonColor))
                 e.Graphics.FillRectangle(background, e.Bounds);
 
             if (e.Index >= 0)
             {
                 var selector = (ComboBox)sender;
                 var bounds = Rectangle.Inflate(e.Bounds, -4, 0);
-                TextRenderer.DrawText(e.Graphics, selector.Items[e.Index].ToString(), selector.Font, bounds, TextColor,
+                TextRenderer.DrawText(e.Graphics, selector.Items[e.Index].ToString(), selector.Font, bounds,
+                    selector.Enabled ? TextColor : MutedColor,
                     TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix);
             }
 
@@ -471,8 +477,7 @@ namespace vibrance.GUI.common
             OpenFileDialog fileDialog = new OpenFileDialog();
             fileDialog.Title = UiLanguage.Translate("Select a game executable");
             DialogResult result = fileDialog.ShowDialog();
-            if (result == DialogResult.OK && fileDialog.CheckFileExists && fileDialog.SafeFileName != null 
-                && _applicationSettings.FirstOrDefault(x => x.FileName.ToLower() == fileDialog.FileName.ToLower()) == null)
+            if (result == DialogResult.OK && fileDialog.CheckFileExists && fileDialog.SafeFileName != null)
             {
                 Icon icon = Icon.ExtractAssociatedIcon(fileDialog.FileName);
                 if (icon != null)
@@ -502,26 +507,31 @@ namespace vibrance.GUI.common
         {
             InitializeApplicationList();
             
-            if(!File.Exists(processExplorerEntry.Path) || _applicationSettings.FirstOrDefault(x => x.FileName.ToLower() == processExplorerEntry.Path.ToLower()) != null)
-            {
-                this.listApplications.SelectedIndices.Clear();
-                return; 
-            }
+            if (!File.Exists(processExplorerEntry.Path))
+                return;
 
             Icon icon = processExplorerEntry.Icon;
             string path = processExplorerEntry.Path;
-            if (icon != null)
+            ListViewItem item = listApplications.Items.Cast<ListViewItem>()
+                .FirstOrDefault(row => string.Equals(row.Tag as string, path, StringComparison.OrdinalIgnoreCase));
+            if (item == null && icon != null)
             {
-                this.listApplications.LargeImageList.Images.Add(icon);
-                ListViewItem lvi = new ListViewItem(Path.GetFileNameWithoutExtension(path));
-                lvi.ImageIndex = this.listApplications.Items.Count;
-                lvi.Tag = path;
-                this.listApplications.Items.Add(lvi);
+                listApplications.LargeImageList.Images.Add(icon);
+                item = new ListViewItem(Path.GetFileNameWithoutExtension(path), listApplications.Items.Count) { Tag = path };
+                listApplications.Items.Add(item);
                 UpdateProfileActions();
-                this.listApplications.SelectedIndices.Clear();
-                lvi.Selected = true;
-                listApplications_DoubleClick(this, EventArgs.Empty);
             }
+
+            if (item == null)
+                return;
+
+            if (listApplications.SelectedItems.Count != 1 || !item.Selected)
+            {
+                listApplications.SelectedIndices.Clear();
+                item.Selected = true;
+            }
+            item.Focused = true;
+            item.EnsureVisible();
         }
 
         private void InitializeApplicationList()
@@ -567,29 +577,68 @@ namespace vibrance.GUI.common
                 ControlPaint.DrawFocusRectangle(e.Graphics, Rectangle.Inflate(row, -4, -1), TextColor, ButtonColor);
         }
 
-        private void listApplications_DoubleClick(object sender, EventArgs e)
+        private void LoadProfileEditor()
         {
-            if (listApplications.SelectedItems.Count == 1)
-            {
-                ListViewItem selectedItem = listApplications.SelectedItems[0];
-                ApplicationSetting actualSetting = _applicationSettings.FirstOrDefault(x => x.FileName == selectedItem.Tag.ToString());
-                VibranceSettings settingsWindow = new VibranceSettings(_v, _minTrackBarValue, _maxTrackBarValue, _defaultIngameValue, selectedItem, actualSetting, _supportedResolutionList, _resolveLabelLevel);
-                DialogResult result = settingsWindow.ShowDialog();
-                if (result == DialogResult.OK)
-                {
-                    ApplicationSetting newSetting = settingsWindow.GetApplicationSetting();
-                    if (_applicationSettings.FirstOrDefault(x => x.FileName == newSetting.FileName) != null)
-                    {
-                        _applicationSettings.Remove(_applicationSettings.First(x => x.FileName == newSetting.FileName));
-                    }
-                    _applicationSettings.Add(newSetting);
-                    ForceSaveVibranceSettings();
-                }
-                else if(actualSetting == null)
-                {
-                    removeApplicationListItem(selectedItem);
-                }
-            }
+            var setting = _applicationSettings.FirstOrDefault(profile => profile.FileName == (string)_editingProfile.Tag);
+            UpdateProfileEditorTitle();
+            int level = setting?.IngameLevel ?? _defaultIngameValue;
+            profileVibranceSlider.Value = Math.Max(_minTrackBarValue, Math.Min(_maxTrackBarValue, level));
+            profileVibranceSlider_ValueChanged(profileVibranceSlider, EventArgs.Empty);
+
+            profileResolution.Items.Clear();
+            if (_supportedResolutionList != null)
+                profileResolution.Items.AddRange(_supportedResolutionList.ToArray());
+
+            var resolution = setting?.ResolutionSettings;
+            if (resolution != null && !profileResolution.Items.Contains(resolution))
+                profileResolution.Items.Add(resolution);
+            if (resolution != null)
+                profileResolution.SelectedItem = resolution;
+            else if (profileResolution.Items.Count > 0)
+                profileResolution.SelectedIndex = 0;
+
+            profileChangeResolution.Enabled = profileResolution.Items.Count > 0;
+            profileChangeResolution.Checked = profileChangeResolution.Enabled && (setting?.IsResolutionChangeNeeded ?? false);
+            profileChangeResolution_CheckedChanged(profileChangeResolution, EventArgs.Empty);
+        }
+
+        private void UpdateProfileEditorTitle()
+        {
+            if (_editingProfile != null)
+                profileEditorTitle.Text = string.Format(UiLanguage.Translate("Settings for “{0}”"), _editingProfile.Text);
+        }
+
+        private void profileVibranceSlider_ValueChanged(object sender, EventArgs e)
+        {
+            profileVibranceValue.Text = _resolveLabelLevel(profileVibranceSlider.Value);
+        }
+
+        private void profileChangeResolution_CheckedChanged(object sender, EventArgs e)
+        {
+            profileResolution.Enabled = profileChangeResolution.Checked;
+        }
+
+        private void saveProfile_Click(object sender, EventArgs e)
+        {
+            string path = (string)_editingProfile.Tag;
+            var resolution = (ResolutionModeWrapper)profileResolution.SelectedItem;
+            var setting = new ApplicationSetting(_editingProfile.Text, path, profileVibranceSlider.Value,
+                resolution, profileChangeResolution.Checked);
+            int index = _applicationSettings.FindIndex(profile => profile.FileName == path);
+            if (index < 0)
+                _applicationSettings.Add(setting);
+            else
+                _applicationSettings[index] = setting;
+
+            ForceSaveVibranceSettings();
+        }
+
+        private void cancelProfile_Click(object sender, EventArgs e)
+        {
+            if (_applicationSettings.Any(profile => profile.FileName == (string)_editingProfile.Tag))
+                LoadProfileEditor();
+            else
+                removeApplicationListItem(_editingProfile);
         }
 
         private void buttonRemoveProgram_Click(object sender, EventArgs e)
@@ -623,11 +672,20 @@ namespace vibrance.GUI.common
         private void UpdateProfileActions()
         {
             int selected = listApplications.SelectedItems.Count;
-            buttonEditProgram.Enabled = listApplications.Enabled && selected == 1;
             buttonRemoveProgram.Enabled = listApplications.Enabled && selected > 0;
             bool hasProfiles = listApplications.Items.Count > 0;
             listApplications.Visible = hasProfiles;
             emptyProfilesLabel.Visible = !hasProfiles;
+
+            var item = listApplications.Enabled && selected == 1 ? listApplications.SelectedItems[0] : null;
+            if (_editingProfile != item)
+            {
+                _editingProfile = item;
+                if (item != null)
+                    LoadProfileEditor();
+            }
+            profileEditor.Visible = item != null;
+            profileEditorPlaceholder.Visible = item == null;
         }
 
         private void buttonProcessExplorer_Click(object sender, EventArgs e)
