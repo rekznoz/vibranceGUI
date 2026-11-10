@@ -56,7 +56,7 @@ namespace vibrance.GUI
                     0,
                     300,
                     100,
-                    x => x.ToString());
+                    x => x);
             }
             else if (adapter == GraphicsAdapter.Nvidia)
             {
