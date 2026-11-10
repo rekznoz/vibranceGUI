@@ -190,11 +190,13 @@ namespace vibrance.GUI.common
                 Location = new Point(246, 555),
                 Size = new Size(122, 24),
                 DropDownStyle = ComboBoxStyle.DropDownList,
+                DrawMode = DrawMode.OwnerDrawFixed,
                 FlatStyle = FlatStyle.Flat,
                 BackColor = ButtonColor,
                 ForeColor = TextColor,
                 TabIndex = 3
             };
+            languageSelector.DrawItem += languageSelector_DrawItem;
             BindTranslation("Language", text => languageSelector.AccessibleName = text);
             languageSelector.Items.AddRange(new object[] { "English", "Español", "Português" });
             languageSelector.SelectedIndex = UiLanguage.SelectedIndex;
