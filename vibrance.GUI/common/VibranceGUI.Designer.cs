@@ -103,31 +103,29 @@ namespace vibrance.GUI.common
 
             var dashboard = CreateTable(1, 5);
             dashboard.Padding = new Padding(24, 18, 24, 12);
-            dashboard.RowStyles.Add(new RowStyle(SizeType.Absolute, 72));
+            dashboard.RowStyles.Add(new RowStyle(SizeType.Absolute, 50));
             dashboard.RowStyles.Add(new RowStyle(SizeType.Absolute, 120));
             dashboard.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
             dashboard.RowStyles.Add(new RowStyle(SizeType.Absolute, 60));
             dashboard.RowStyles.Add(new RowStyle(SizeType.Absolute, 42));
 
-            var header = CreateTable(3, 2);
-            header.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 56));
+            var header = CreateTable(4, 1);
+            header.Padding = new Padding(0, 0, 0, 12);
+            header.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 146));
+            header.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 108));
             header.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
             header.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 128));
-            header.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
-            header.RowStyles.Add(new RowStyle(SizeType.Absolute, 22));
-            var mark = CreateLabel("VG", AccentColor, 13F, FontStyle.Bold, translate: false);
-            mark.BackColor = ButtonColor;
-            mark.TextAlign = ContentAlignment.MiddleCenter;
-            mark.Margin = new Padding(0, 4, 12, 8);
-            header.Controls.Add(mark, 0, 0);
-            header.SetRowSpan(mark, 2);
-            header.Controls.Add(CreateLabel("vibranceGUI", TextColor, 22F, FontStyle.Bold, translate: false), 1, 0);
-            header.Controls.Add(CreateLabel("Desktop color and game profiles", MutedColor), 1, 1);
+            var updates = CreateButton("Updates");
+            updates.Margin = new Padding(0, 0, 8, 0);
+            updates.Click += (sender, e) => OpenLink("https://github.com/rekznoz/vibranceGUI");
+            var contact = CreateButton("Contact");
+            contact.Click += (sender, e) => OpenLink("https://steamcommunity.com/id/rekznoz/");
+            header.Controls.Add(updates, 0, 0);
+            header.Controls.Add(contact, 1, 0);
             statusLabel = CreateLabel(UiLanguage.Translate(_statusText), MutedColor, 9F, FontStyle.Bold, translate: false);
             statusLabel.BackColor = ButtonColor;
             statusLabel.TextAlign = ContentAlignment.MiddleCenter;
-            statusLabel.Margin = new Padding(0, 4, 0, 0);
-            header.Controls.Add(statusLabel, 2, 0);
+            header.Controls.Add(statusLabel, 3, 0);
             dashboard.Controls.Add(header, 0, 0);
 
             var desktop = CreateTable(2, 3);
