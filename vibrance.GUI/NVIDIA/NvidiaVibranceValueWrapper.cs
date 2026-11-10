@@ -8,7 +8,7 @@ namespace vibrance.GUI.NVIDIA
 
         private static List<NvidiaVibranceValueWrapper> _settingsList;
 
-        public NvidiaVibranceValueWrapper(int value, string percentage)
+        public NvidiaVibranceValueWrapper(int value, int percentage)
         {
             this.Value = value;
             this.Percentage = percentage;
@@ -16,7 +16,7 @@ namespace vibrance.GUI.NVIDIA
 
         public int Value { get; set; }
 
-        public string Percentage { get; set; } = string.Empty;
+        public int Percentage { get; set; }
 
         private static List<NvidiaVibranceValueWrapper> GenerateSettingsWrapper()
         {
@@ -27,7 +27,7 @@ namespace vibrance.GUI.NVIDIA
             int percentageValue = NvapiDefaultLevel;
             foreach (int value in staticValues)
             {
-                settingsWrapperList.Add(new NvidiaVibranceValueWrapper(value, percentageValue + "%"));
+                settingsWrapperList.Add(new NvidiaVibranceValueWrapper(value, percentageValue));
                 percentageValue++;
             }
             return settingsWrapperList;
