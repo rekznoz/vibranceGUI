@@ -86,7 +86,7 @@ namespace vibrance.GUI.common
                 }
                 else
                 {
-                    MessageBox.Show("Changing the resolution failed: " + Enum.GetName(typeof(DispChange), returnValue));
+                    MessageBox.Show(string.Format(UiLanguage.Translate("Changing the resolution failed: {0}"), returnValue));
                 }
             }
             return false;
