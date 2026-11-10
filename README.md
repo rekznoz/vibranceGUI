@@ -4,7 +4,7 @@
 
 Ajusta automáticamente la saturación de Windows al jugar a Counter-Strike 2 u otros juegos. vibranceGUI detecta la aplicación en primer plano y aplica el perfil correspondiente mediante **Digital Vibrance** en NVIDIA o el control de **saturación** en AMD.
 
-## Qué ha mejorado en este fork
+## Qué ha mejorado en este fork (2.5.0)
 
 - **Interfaz oscura con Krypton Toolkit.** Ventana redimensionable, tarjetas redondeadas, acentos lavanda y desplegables con flechas discretas. Los interruptores ocupan una sola fila para dejar más espacio al editor.
 - **Porcentajes editables.** Escribe el valor de saturación del escritorio o del juego en el campo junto a su barra. Pulsa **Enter** o sal del campo para aplicarlo. En los perfiles, pulsa **Guardar** para conservar el cambio.
