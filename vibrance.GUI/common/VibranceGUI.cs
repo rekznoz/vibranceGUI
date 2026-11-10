@@ -23,10 +23,13 @@ namespace vibrance.GUI.common
         private readonly IVibranceProxy _v;
         private IRegistryController _registryController;
         private const string AppName = "vibranceGUI";
+        private const string SaveError = "Your settings could not be saved. Check that the settings folder is writable.";
         private const string TwitterLink = "https://twitter.com/juvlarN";
         private const string PaypalDonationLink = "https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=JDQFNKNNEW356";
 
         private bool _allowVisible;
+        private readonly List<Action> _languageBindings = new List<Action>();
+        private string _statusText = "Starting";
         private bool _settingsLoaded;
         private bool _settingsDirty;
         private List<ApplicationSetting> _applicationSettings;
@@ -201,14 +204,45 @@ namespace vibrance.GUI.common
         {
             if (e.ProgressPercentage == 1)
             {
-                this.statusLabel.Text = "●  Active";
+                SetStatusText("●  Active");
                 this.statusLabel.ForeColor = AccentColor;
             }
             else if (e.ProgressPercentage == 2)
             {
-                this.statusLabel.Text = "NVAPI unloaded";
+                SetStatusText("NVAPI unloaded");
                 this.statusLabel.ForeColor = WarningColor;
             }
+        }
+
+        private void SetStatusText(string english)
+        {
+            _statusText = english;
+            statusLabel.Text = UiLanguage.Translate(english);
+        }
+
+        private void BindTranslation(string english, Action<string> apply)
+        {
+            Action update = () => apply(UiLanguage.Translate(english));
+            _languageBindings.Add(update);
+            update();
+        }
+
+        private void languageSelector_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            int index = ((ComboBox)sender).SelectedIndex;
+            if (index < 0)
+                return;
+
+            bool saved = UiLanguage.Select(index);
+            foreach (Action update in _languageBindings)
+                update();
+            statusLabel.Text = UiLanguage.Translate(_statusText);
+
+            foreach (var explorer in Application.OpenForms.OfType<ProcessExplorer>())
+                explorer.RefreshLanguage();
+
+            if (!saved)
+                ShowSaveError();
         }
 
         private void notifyIcon_MouseClick(object sender, MouseEventArgs e)
@@ -302,7 +336,7 @@ namespace vibrance.GUI.common
         {
             try
             {
-                this.statusLabel.Text = "Closing...";
+                SetStatusText("Closing...");
                 this.statusLabel.ForeColor = WarningColor;
                 this.Update();
                 if (_v != null && _v.GetVibranceInfo().isInitialized)
@@ -400,10 +434,12 @@ namespace vibrance.GUI.common
             );
 
             if (_settingsDirty && showError)
-            {
-                MessageBox.Show(this, "Your settings could not be saved. Check that the settings folder is writable.",
-                    AppName, MessageBoxButtons.OK, MessageBoxIcon.Warning);
-            }
+                ShowSaveError();
+        }
+
+        private void ShowSaveError()
+        {
+            MessageBox.Show(this, UiLanguage.Translate(SaveError), AppName, MessageBoxButtons.OK, MessageBoxIcon.Warning);
         }
 
         private void buttonPaypal_Click(object sender, EventArgs e)
@@ -416,6 +452,7 @@ namespace vibrance.GUI.common
             InitializeApplicationList();
 
             OpenFileDialog fileDialog = new OpenFileDialog();
+            fileDialog.Title = UiLanguage.Translate("Select a game executable");
             DialogResult result = fileDialog.ShowDialog();
             if (result == DialogResult.OK && fileDialog.CheckFileExists && fileDialog.SafeFileName != null 
                 && _applicationSettings.FirstOrDefault(x => x.FileName.ToLower() == fileDialog.FileName.ToLower()) == null)
