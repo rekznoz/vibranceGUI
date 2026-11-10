@@ -22,11 +22,13 @@ namespace vibrance.GUI
         [STAThread]
         static void Main(string[] args)
         {
+            UiLanguage.Load();
             bool result = false;
             Mutex mutex = new Mutex(true, "vibranceGUI~Mutex", out result);
             if (!result)
             {
-                MessageBox.Show("You can run vibranceGUI only once at a time!", MessageBoxCaption, MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show(UiLanguage.Translate("You can run vibranceGUI only once at a time!"),
+                    UiLanguage.Translate(MessageBoxCaption), MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
 
@@ -69,8 +71,8 @@ namespace vibrance.GUI
             }
             else if (adapter == GraphicsAdapter.Unknown)
             {
-                if (MessageBox.Show(ErrorGraphicsAdapterUnknown,
-                    MessageBoxCaption, MessageBoxButtons.YesNo, MessageBoxIcon.Error) == DialogResult.Yes)
+                if (MessageBox.Show(UiLanguage.Translate(ErrorGraphicsAdapterUnknown),
+                    UiLanguage.Translate(MessageBoxCaption), MessageBoxButtons.YesNo, MessageBoxIcon.Error) == DialogResult.Yes)
                 {
                     System.Diagnostics.Process.Start("https://twitter.com/juvlarN");
                 }
@@ -78,7 +80,8 @@ namespace vibrance.GUI
             }
             else if (adapter == GraphicsAdapter.Ambiguous)
             {
-                MessageBox.Show(ErrorGraphicsAdapterAmbiguous, MessageBoxCaption, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(UiLanguage.Translate(ErrorGraphicsAdapterAmbiguous),
+                    UiLanguage.Translate(MessageBoxCaption), MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
             if (args.Contains("-minimized"))
