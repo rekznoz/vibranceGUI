@@ -7,7 +7,6 @@ namespace vibrance.GUI.common
     {
         private static readonly Dictionary<string, string[]> Translations = new Dictionary<string, string[]>
         {
-            { "Updates", new[] { "Novedades", "Novidades" } },
             { "Exit", new[] { "Salir", "Sair" } },
             { "Desktop color and game profiles", new[] { "Color del escritorio y perfiles de juego", "Cor do ambiente de trabalho e perfis de jogo" } },
             { "Starting", new[] { "Iniciando", "A iniciar" } },
@@ -33,7 +32,6 @@ namespace vibrance.GUI.common
             { "Prevent game profiles from changing the display resolution.", new[] { "Impide que los perfiles cambien la resolución de pantalla.", "Impede os perfis de alterarem a resolução do ecrã." } },
             { "Desktop settings autosave", new[] { "Ajustes del escritorio con guardado automático", "Definições do ambiente de trabalho com gravação automática" } },
             { "Language", new[] { "Idioma", "Idioma" } },
-            { "Donate", new[] { "Donar", "Doar" } },
             { "Your settings could not be saved. Check that the settings folder is writable.", new[] { "No se pudo guardar la configuración. Comprueba que puedes escribir en la carpeta de configuración.", "Não foi possível guardar as definições. Verifica se podes escrever na pasta de configuração." } },
             { "Registered to Autostart!", new[] { "Inicio automático activado.", "Arranque automático ativado." } },
             { "Registering to Autostart failed!", new[] { "No se pudo activar el inicio automático.", "Não foi possível ativar o arranque automático." } },
