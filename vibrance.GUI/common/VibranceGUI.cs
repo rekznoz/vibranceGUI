@@ -242,13 +242,30 @@ namespace vibrance.GUI.common
                 update();
             statusLabel.Text = UiLanguage.Translate(_statusText);
             UpdateProfileEditorTitle();
-            profileResolution.Invalidate();
+            RefreshProfileResolutionLabels();
 
             foreach (var explorer in Application.OpenForms.OfType<ProcessExplorer>())
                 explorer.RefreshLanguage();
 
             if (!saved)
                 ShowSaveError();
+        }
+
+        private void RefreshProfileResolutionLabels()
+        {
+            int selectedIndex = profileResolution.SelectedIndex;
+            var modes = profileResolution.Items.Cast<object>().ToArray();
+            profileResolution.ComboBox.BeginUpdate();
+            try
+            {
+                profileResolution.Items.Clear();
+                profileResolution.Items.AddRange(modes);
+                profileResolution.SelectedIndex = selectedIndex;
+            }
+            finally
+            {
+                profileResolution.ComboBox.EndUpdate();
+            }
         }
 
         private void notifyIcon_MouseClick(object sender, MouseEventArgs e)
