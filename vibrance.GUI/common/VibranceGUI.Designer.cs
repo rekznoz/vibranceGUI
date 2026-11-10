@@ -14,6 +14,7 @@ namespace vibrance.GUI.common
         private static readonly Color TextColor = Color.FromArgb(240, 244, 249);
         private static readonly Color MutedColor = Color.FromArgb(164, 178, 196);
         private static readonly Color AccentColor = Color.FromArgb(175, 194, 255);
+        private static readonly Color ActiveColor = Color.FromArgb(148, 225, 184);
         private static readonly Color ButtonColor = Color.FromArgb(40, 48, 61);
         private static readonly Color BorderColor = Color.FromArgb(54, 64, 85);
         private static readonly Color WarningColor = Color.FromArgb(255, 156, 153);
@@ -327,6 +328,7 @@ namespace vibrance.GUI.common
             card.StateCommon.Border.DrawBorders = PaletteDrawBorders.All;
             card.StateCommon.Border.Width = 1;
             card.StateCommon.Border.Rounding = 12;
+            content.BackColor = CardColor;
             card.Panel.Controls.Add(content);
             return card;
         }
@@ -388,12 +390,16 @@ namespace vibrance.GUI.common
                 Margin = Padding.Empty,
                 AutoSize = false,
                 Maximum = 63,
-                TickStyle = TickStyle.None
+                TickStyle = TickStyle.None,
+                TrackBarSize = PaletteTrackBarSize.Medium,
+                BackColor = CardColor
             };
             slider.StateCommon.Track.Color1 = BorderColor;
             slider.StateCommon.Track.Color2 = BorderColor;
             slider.StateCommon.Position.Color1 = AccentColor;
             slider.StateCommon.Position.Color2 = AccentColor;
+            slider.StateTracking.Position.Color1 = TextColor;
+            slider.StateTracking.Position.Color2 = TextColor;
             BindTranslation(name, text => slider.AccessibleName = text);
             return slider;
         }
