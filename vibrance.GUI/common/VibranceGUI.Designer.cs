@@ -46,7 +46,7 @@
             this.observerStatusLabel = new System.Windows.Forms.Label();
             this.labelTwitter = new System.Windows.Forms.Label();
             this.linkLabelTwitter = new System.Windows.Forms.LinkLabel();
-            this.settingsBackgroundWorker = new System.ComponentModel.BackgroundWorker();
+            this.settingsSaveTimer = new System.Windows.Forms.Timer(this.components);
             this.buttonPaypal = new System.Windows.Forms.Button();
             this.labelPaypal = new System.Windows.Forms.Label();
             this.toolTip = new System.Windows.Forms.ToolTip(this.components);
@@ -222,10 +222,10 @@
             this.linkLabelTwitter.Text = "https://twitter.com/juvlarN";
             this.linkLabelTwitter.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.linkLabelTwitter_LinkClicked);
             // 
-            // settingsBackgroundWorker
+            // settingsSaveTimer
             // 
-            this.settingsBackgroundWorker.DoWork += new System.ComponentModel.DoWorkEventHandler(this.settingsBackgroundWorker_DoWork);
-            this.settingsBackgroundWorker.RunWorkerCompleted += new System.ComponentModel.RunWorkerCompletedEventHandler(this.settingsBackgroundWorker_RunWorkerCompleted);
+            this.settingsSaveTimer.Interval = 5000;
+            this.settingsSaveTimer.Tick += new System.EventHandler(this.settingsSaveTimer_Tick);
             // 
             // buttonPaypal
             // 
@@ -358,7 +358,7 @@
         private System.Windows.Forms.Label observerStatusLabel;
         private System.Windows.Forms.Label labelTwitter;
         private System.Windows.Forms.LinkLabel linkLabelTwitter;
-        private System.ComponentModel.BackgroundWorker settingsBackgroundWorker;
+        private System.Windows.Forms.Timer settingsSaveTimer;
         private System.Windows.Forms.Button buttonPaypal;
         private System.Windows.Forms.Label labelPaypal;
         private System.Windows.Forms.ToolTip toolTip;
