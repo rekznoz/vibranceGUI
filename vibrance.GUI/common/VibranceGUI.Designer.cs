@@ -414,11 +414,11 @@ namespace vibrance.GUI.common
             var input = new TextBox
             {
                 Anchor = AnchorStyles.Left | AnchorStyles.Right,
-                Margin = new Padding(12, 0, 0, 0),
-                BackColor = InsetColor,
+                Margin = Padding.Empty,
+                BackColor = CardColor,
                 ForeColor = AccentColor,
-                BorderStyle = BorderStyle.FixedSingle,
-                Font = new Font("Segoe UI", 12F, FontStyle.Bold),
+                BorderStyle = BorderStyle.None,
+                Font = new Font("Segoe UI", 18F, FontStyle.Bold),
                 TextAlign = HorizontalAlignment.Right
             };
             BindTranslation(name, translation => input.AccessibleName = translation);
