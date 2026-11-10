@@ -216,6 +216,34 @@ namespace vibrance.GUI.common
             return _instance;
         }
 
+        [DllImport("user32.dll")]
+        internal static extern IntPtr GetForegroundWindow();
+
+        internal static bool HasForegroundProfile(System.Collections.Generic.List<ApplicationSetting> profiles)
+        {
+            if (profiles.Count == 0)
+                return false;
+
+            uint processId;
+            GetWindowThreadProcessId(GetForegroundWindow(), out processId);
+            try
+            {
+                using (Process process = Process.GetProcessById((int)processId))
+                {
+                    string name = process.ProcessName;
+                    return profiles.Exists(profile => string.Equals(profile.Name, name, StringComparison.OrdinalIgnoreCase));
+                }
+            }
+            catch (ArgumentException)
+            {
+                return false;
+            }
+            catch (InvalidOperationException)
+            {
+                return false;
+            }
+        }
+
         static void WinEventProc(IntPtr hWinEventHook, uint eventType, IntPtr hwnd, int idObject, int idChild, uint dwEventThread, uint dwmsEventTime)
         {
             uint processId;
