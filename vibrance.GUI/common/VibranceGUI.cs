@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
@@ -24,8 +23,6 @@ namespace vibrance.GUI.common
         private IRegistryController _registryController;
         private const string AppName = "vibranceGUI";
         private const string SaveError = "Your settings could not be saved. Check that the settings folder is writable.";
-        private const string TwitterLink = "https://twitter.com/juvlarN";
-        private const string PaypalDonationLink = "https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=JDQFNKNNEW356";
 
         private bool _allowVisible;
         private readonly List<Action> _languageBindings = new List<Action>();
@@ -122,7 +119,6 @@ namespace vibrance.GUI.common
             if (this.WindowState == FormWindowState.Minimized)
             {
                 //this.notifyIcon.Visible = true;
-                //this.notifyIcon.BalloonTipText = "Running minimized... Like the program? Consider donating!";
                 //this.notifyIcon.ShowBalloonTip(250);
                 this.Hide();
             }
@@ -319,11 +315,6 @@ namespace vibrance.GUI.common
             notifyIcon.ShowBalloonTip(250);
         }
 
-        private void twitterToolStripTextBox_Click(object sender, EventArgs e)
-        {
-            Process.Start(TwitterLink);
-        }
-
         private void SetGuiEnabledFlag(bool flag)
         {
             this.Invoke((MethodInvoker)delegate
@@ -447,11 +438,6 @@ namespace vibrance.GUI.common
         private void ShowSaveError()
         {
             MessageBox.Show(this, UiLanguage.Translate(SaveError), AppName, MessageBoxButtons.OK, MessageBoxIcon.Warning);
-        }
-
-        private void buttonPaypal_Click(object sender, EventArgs e)
-        {
-            Process.Start(PaypalDonationLink);
         }
 
         private void buttonAddProgram_Click(object sender, EventArgs e)
