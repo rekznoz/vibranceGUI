@@ -143,10 +143,10 @@ namespace vibrance.GUI.common
             desktop.Controls.Add(CreateLabel("Desktop vibrance", TextColor, 13F, FontStyle.Bold), 0, 0);
             desktop.Controls.Add(CreateLabel("Color level when no game profile is active.", MutedColor), 0, 1);
             trackBarWindowsLevel = CreateSlider("Desktop vibrance");
-            trackBarWindowsLevel.Scroll += trackBarWindowsLevel_Scroll;
             desktop.Controls.Add(trackBarWindowsLevel, 0, 2);
             labelWindowsLevel = CreateVibranceValue("—");
             desktop.Controls.Add(labelWindowsLevel, 1, 2);
+            trackBarWindowsLevel.ValueChanged += trackBarWindowsLevel_ValueChanged;
             dashboard.Controls.Add(CreateCard(desktop, new Padding(0, 0, 0, 12)), 0, 1);
 
             var workspace = CreateTable(2, 1);
@@ -303,7 +303,6 @@ namespace vibrance.GUI.common
             UpdateProfileActions();
             FormClosing += Form1_FormClosing;
             Load += Form1_Load;
-            Shown += Form1_Shown;
             Resize += Form1_Resize;
             ResumeLayout(true);
         }
