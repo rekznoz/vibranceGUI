@@ -12,6 +12,7 @@ namespace vibrance.GUI.common
             { "Contact", new[] { "Contacto", "Contacto" } },
             { "Starting", new[] { "Iniciando", "A iniciar" } },
             { "●  Active", new[] { "●  Activo", "●  Ativo" } },
+            { "●  Inactive", new[] { "●  Inactivo", "●  Inativo" } },
             { "NVAPI unloaded", new[] { "NVAPI desactivada", "NVAPI desativada" } },
             { "Closing...", new[] { "Cerrando…", "A fechar…" } },
             { "Desktop vibrance", new[] { "Saturación del escritorio", "Saturação do ambiente de trabalho" } },
