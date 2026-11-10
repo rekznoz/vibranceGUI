@@ -1,6 +1,6 @@
 name: Windows build
 
-on: [push, pull_request]
+on: [push, pull_request, workflow_dispatch]
 
 permissions:
   contents: read
@@ -20,3 +20,11 @@ jobs:
           if (!$msbuild) { throw 'MSBuild was not found.' }
           & $msbuild vibrance.GUI.sln /nologo /m /p:Configuration=Release /p:Platform=x86
           exit $LASTEXITCODE
+      - name: Upload Release x86
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: vibranceGUI-Release-x86
+          path: |
+            vibrance.GUI/bin/x86/Release/vibrance.GUI.exe
+            vibrance.GUI/bin/x86/Release/vibrance.GUI.exe.config
+          if-no-files-found: error
