@@ -1,0 +1,22 @@
+name: Windows build
+
+on: [push, pull_request]
+
+permissions:
+  contents: read
+
+jobs:
+  release-x86:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - name: Build Release x86
+        shell: pwsh
+        run: |
+          $vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
+          $msbuild = & $vswhere -latest -products '*' -requires Microsoft.Component.MSBuild -find 'MSBuild\Current\Bin\MSBuild.exe' | Select-Object -First 1
+          if (!$msbuild) { throw 'MSBuild was not found.' }
+          & $msbuild vibrance.GUI.sln /nologo /m /p:Configuration=Release /p:Platform=x86
+          exit $LASTEXITCODE
