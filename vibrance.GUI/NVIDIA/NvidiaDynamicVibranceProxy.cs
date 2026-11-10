@@ -131,7 +131,7 @@ namespace vibrance.GUI.NVIDIA
         private static List<ApplicationSetting> _applicationSettings;
         private static Dictionary<string, List<ResolutionModeWrapper>> _supportedResolutionModes;
         private WinEventHook _hook;
-        private static Screen _gameScreen;
+        private static int _gameDisplayHandle = -1;
 
         public NvidiaDynamicVibranceProxy(List<ApplicationSetting> savedApplicationSettings, Dictionary<string, List<ResolutionModeWrapper>> supportedResolutionModes)
         {
@@ -193,69 +193,32 @@ namespace vibrance.GUI.NVIDIA
             _vibranceInfo.szGpuName = buffer.ToString();
             _vibranceInfo.defaultHandle = enumerateNvidiaDisplayHandle(0);
 
-            NvDisplayDvcInfo info = new NvDisplayDvcInfo();
-            if (getDVCInfo(ref info, _vibranceInfo.defaultHandle))
-            {
-                if (info.currentLevel != _vibranceInfo.userVibranceSettingDefault)
-                {
-                    setDVCLevel(_vibranceInfo.defaultHandle, _vibranceInfo.userVibranceSettingDefault);
-                }
-            }
-
             _vibranceInfo.isInitialized = true;
         }
 
         private static void OnWinEventHook(object sender, WinEventHookEventArgs e)
         {
-            if (_applicationSettings.Count > 0)
-            {
-                ApplicationSetting applicationSetting = _applicationSettings.FirstOrDefault(x => string.Equals(x.Name, e.ProcessName, StringComparison.OrdinalIgnoreCase));
-                if (applicationSetting != null)
-                {
-                    Screen screen = Screen.FromHandle(e.Handle);
-                    var resolution = !_vibranceInfo.neverChangeResolution && applicationSetting.IsResolutionChangeNeeded
-                        ? applicationSetting.ResolutionSettings : null;
-                    ResolutionHelper.ApplyProfileResolution(screen.DeviceName, resolution, _supportedResolutionModes);
+            if (!_vibranceInfo.shouldRun || e.Handle != WinEventHook.GetForegroundWindow())
+                return;
 
-                    int displayHandle = GetApplicationDisplayHandle(e.Handle);
-                    //test if changing the vibrance value is needed
-                    if (displayHandle != -1 && !equalsDVCLevel(displayHandle, applicationSetting.IngameLevel))
-                    {
-                        _gameScreen = screen;
-                        _vibranceInfo.defaultHandle = displayHandle;
-                        setDVCLevel(_vibranceInfo.defaultHandle, applicationSetting.IngameLevel);
-                    }
-                }
-                else
-                {
-                    IntPtr processHandle = e.Handle;
-
-                    if (!isWindowActive(ref processHandle))
-                        return;
-                    
-                    ResolutionHelper.RestoreProfileResolutions();
-                    Screen currentScreen = Screen.FromHandle(processHandle);
-
-                    //test if changing the vibrance value is needed
-                    if (_vibranceInfo.affectPrimaryMonitorOnly && !equalsDVCLevel(_vibranceInfo.defaultHandle, _vibranceInfo.userVibranceSettingDefault))
-                    {
-                        if(_gameScreen != null && !_gameScreen.DeviceName.Equals(currentScreen.DeviceName))
-                        {
-                            return;
-                        }
-
-                        setDVCLevel(_vibranceInfo.defaultHandle, _vibranceInfo.userVibranceSettingDefault);
-                    }
-                    else if (!_vibranceInfo.affectPrimaryMonitorOnly && !_vibranceInfo.displayHandles.TrueForAll(handle => equalsDVCLevel(handle, _vibranceInfo.userVibranceSettingDefault)))
-                    {
-                        _vibranceInfo.displayHandles.ForEach(handle => setDVCLevel(handle, _vibranceInfo.userVibranceSettingDefault));
-                    }
-                }
-            }
-            else
+            var profile = _applicationSettings.FirstOrDefault(x => string.Equals(x.Name, e.ProcessName, StringComparison.OrdinalIgnoreCase));
+            if (profile == null)
             {
                 ResolutionHelper.RestoreProfileResolutions();
+                ApplyDesktopVibrance();
+                return;
             }
+
+            Screen screen = Screen.FromHandle(e.Handle);
+            var resolution = !_vibranceInfo.neverChangeResolution && profile.IsResolutionChangeNeeded
+                ? profile.ResolutionSettings : null;
+            ResolutionHelper.ApplyProfileResolution(screen.DeviceName, resolution, _supportedResolutionModes);
+
+            int displayHandle = GetDisplayHandle(screen);
+            if (_gameDisplayHandle != displayHandle)
+                SetDisplayVibrance(_gameDisplayHandle, _vibranceInfo.userVibranceSettingDefault);
+            _gameDisplayHandle = displayHandle;
+            SetDisplayVibrance(displayHandle, profile.IngameLevel);
         }
 
         private void EnumerateDisplayHandles()
@@ -271,22 +234,31 @@ namespace vibrance.GUI.NVIDIA
             }
         }
 
-        private static int GetApplicationDisplayHandle(IntPtr hWnd)
+        private static int GetDisplayHandle(Screen screen)
         {
-            if (hWnd != IntPtr.Zero)
-            {
-                Screen primaryScreen = System.Windows.Forms.Screen.FromHandle(hWnd);
-                if (primaryScreen != null)
-                {
-                    string deviceName = primaryScreen.DeviceName;
-                    GCHandle handle = GCHandle.Alloc(deviceName, GCHandleType.Pinned);
-                    int id = getAssociatedNvidiaDisplayHandle(deviceName, deviceName.Length);
-                    handle.Free();
+            return screen == null ? -1 : getAssociatedNvidiaDisplayHandle(screen.DeviceName, screen.DeviceName.Length);
+        }
 
-                    return id;
-                }
+        private static void SetDisplayVibrance(int handle, int level)
+        {
+            if (handle != -1 && !equalsDVCLevel(handle, level))
+                setDVCLevel(handle, level);
+        }
+
+        private static void ApplyDesktopVibrance()
+        {
+            int level = _vibranceInfo.userVibranceSettingDefault;
+            if (_vibranceInfo.affectPrimaryMonitorOnly)
+            {
+                int primary = GetDisplayHandle(Screen.PrimaryScreen);
+                SetDisplayVibrance(primary == -1 ? _vibranceInfo.defaultHandle : primary, level);
             }
-            return -1;
+            else
+            {
+                _vibranceInfo.displayHandles.ForEach(handle => SetDisplayVibrance(handle, level));
+            }
+            SetDisplayVibrance(_gameDisplayHandle, level);
+            _gameDisplayHandle = -1;
         }
 
         public void SetApplicationSettings(List<ApplicationSetting> refApplicationSettings)
@@ -306,6 +278,8 @@ namespace vibrance.GUI.NVIDIA
         public void SetVibranceWindowsLevel(int vibranceWindowsLevel)
         {
             _vibranceInfo.userVibranceSettingDefault = vibranceWindowsLevel;
+            if (_vibranceInfo.shouldRun && !WinEventHook.HasForegroundProfile(_applicationSettings))
+                ApplyDesktopVibrance();
         }
 
         public void SetVibranceIngameLevel(int vibranceIngameLevel)
@@ -325,6 +299,8 @@ namespace vibrance.GUI.NVIDIA
         public void SetAffectPrimaryMonitorOnly(bool affectPrimaryMonitorOnly)
         {
             _vibranceInfo.affectPrimaryMonitorOnly = affectPrimaryMonitorOnly;
+            if (_vibranceInfo.shouldRun && !WinEventHook.HasForegroundProfile(_applicationSettings))
+                ApplyDesktopVibrance();
         }
 
         public VibranceInfo GetVibranceInfo()
@@ -345,12 +321,7 @@ namespace vibrance.GUI.NVIDIA
             if (_hook != null)
                 _hook.WinEventHookHandler -= OnWinEventHook;
             ResolutionHelper.RestoreProfileResolutions();
-            if (_vibranceInfo.affectPrimaryMonitorOnly)
-            {
-                setDVCLevel(_vibranceInfo.defaultHandle, _vibranceInfo.userVibranceSettingDefault);
-            }
-            else if (!_vibranceInfo.displayHandles.TrueForAll(handle => equalsDVCLevel(handle, _vibranceInfo.userVibranceSettingDefault)))
-                _vibranceInfo.displayHandles.ForEach(handle => setDVCLevel(handle, _vibranceInfo.userVibranceSettingDefault));
+            ApplyDesktopVibrance();
         }
     }
 }
