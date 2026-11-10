@@ -10,13 +10,15 @@ Ajusta automáticamente la saturación de Windows al jugar a Counter-Strike 2 u 
 - **Cambios de pantalla temporales.** La resolución del perfil se aplica sin escribirla en el registro de Windows. vibranceGUI guarda el modo anterior de cada monitor y lo restaura al salir del perfil, incluso al pasar a otro monitor, o al cerrar el programa. En NVIDIA, el modo del perfil también se aplica si la saturación ya coincide.
 - **Guardado más fiable.** Los ajustes del escritorio se guardan automáticamente. Los perfiles se escriben en un XML temporal y el archivo anterior solo se sustituye cuando el nuevo está completo. La interfaz muestra un aviso si falla el guardado.
 - **Detección de GPU.** Windows indica qué adaptadores AMD y NVIDIA están presentes y operativos antes de que vibranceGUI compruebe sus controladores. Si ambos fabricantes están disponibles, la aplicación avisa de que esta versión solo puede usar uno a la vez.
-- **Compilación en Windows x86.** Migración de .NET Framework 4.0 a 4.8 y retirada de Fody y Costura. GitHub Actions restaura las dependencias de NuGet, verifica el SHA-256 de la DLL de NVIDIA y publica el ZIP con las demás DLL en la carpeta `lib`.
+- **Descarga en un solo EXE.** GitHub Actions compila para Windows x86 con .NET Framework 4.8, verifica el SHA-256 de la DLL de NVIDIA e incrusta las dependencias gestionadas con Costura.
 
 ## Descargar y abrir
 
 1. Abre [Actions → Windows build](https://github.com/rekznoz/vibranceGUI/actions/workflows/build.yml).
-2. Entra en una ejecución completada correctamente y descarga **vibranceGUI-Release-x86** desde **Artifacts**. Si tienes acceso de escritura al repositorio, puedes iniciar una compilación con **Run workflow**.
-3. Extrae el ZIP completo y abre **vibrance.GUI.exe**. Mantén la carpeta **lib** y el archivo **vibrance.GUI.exe.config** junto al ejecutable.
+2. Entra en una ejecución completada correctamente y descarga **vibranceGUI-SingleExe-x86** desde **Artifacts**.
+3. Extrae **vibrance.GUI.exe** y muévelo a donde quieras, incluido el escritorio. Requiere .NET Framework 4.8 en Windows.
+
+Si tienes acceso de escritura, puedes compilar desde **Run workflow**. Desmarca **Build the single executable** para generar el ZIP de respaldo **vibranceGUI-Release-x86**. Si usas ese ZIP, extrae todo y mantén `lib` y `vibrance.GUI.exe.config` junto al ejecutable.
 
 ## Configurar un perfil de CS2
 
@@ -31,22 +33,10 @@ La saturación del escritorio se configura por separado y se aplica cuando no ha
 Instala Visual Studio 2022 o Build Tools 2022 con **Desarrollo de escritorio de .NET** y el **Developer Pack de .NET Framework 4.8**. Abre una consola de desarrollador de Visual Studio en la raíz del repositorio. [Developer Pack de Microsoft](https://learn.microsoft.com/en-us/dotnet/framework/install/guide-for-developers)
 
 ```bat
-msbuild vibrance.GUI.sln /restore /m /p:Configuration=Release /p:Platform=x86
-```
-
-El resultado local está en `vibrance.GUI\bin\x86\Release\`. La DLL de NVIDIA requiere un proceso x86, también en Windows de 64 bits.
-
-### EXE único experimental
-
-En **Actions → Windows build → Run workflow**, activa **Build the experimental single executable**. La ejecución comprueba que el EXE puede cargar Krypton desde una carpeta vacía y publica **vibranceGUI-SingleExe-x86**. Extrae el ejecutable del artefacto. Requiere que .NET Framework 4.8 esté instalado en Windows.
-
-Para compilar la misma variante en una consola de desarrollador de Visual Studio:
-
-```bat
 msbuild vibrance.GUI.sln /restore /m /p:Configuration=Release /p:Platform=x86 /p:SingleExe=true
 ```
 
-El ejecutable experimental está en `vibrance.GUI\bin\x86\SingleExe\vibrance.GUI.exe`. Costura incrusta las dependencias gestionadas. La comprobación de arranque valida la carga de la interfaz. La aplicación de perfiles requiere una prueba con el controlador gráfico y el juego.
+El EXE único está en `vibrance.GUI\bin\x86\SingleExe\vibrance.GUI.exe`. Para compilar con las DLL separadas, omite `/p:SingleExe=true`. En ese caso, el resultado está en `vibrance.GUI\bin\x86\Release\`. La DLL de NVIDIA requiere un proceso x86, también en Windows de 64 bits.
 
 ### Procedencia de la DLL de NVIDIA
 
