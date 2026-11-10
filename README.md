@@ -4,6 +4,16 @@
 
 Ajusta automáticamente la saturación de Windows al jugar a Counter-Strike 2 u otros juegos. vibranceGUI detecta la aplicación en primer plano y aplica el perfil correspondiente mediante **Digital Vibrance** en NVIDIA o el control de **saturación** en AMD.
 
+## Descargar para Windows
+
+[![Descargar ZIP para Windows x86](https://img.shields.io/badge/Descargar-Windows%20x86-238636?style=for-the-badge&logo=github&logoColor=white)](https://github.com/rekznoz/vibranceGUI/releases/latest/download/vibranceGUI-SingleExe-x86.zip)
+[![Ver la última versión en GitHub](https://img.shields.io/badge/GitHub-%C3%9Altima%20versi%C3%B3n-30363D?style=for-the-badge&logo=github&logoColor=white)](https://github.com/rekznoz/vibranceGUI/releases/latest)
+
+1. Descarga **vibranceGUI-SingleExe-x86.zip** con el botón verde o desde **Assets** en la última release.
+2. Extrae el ZIP y abre **vibrance.GUI.exe**. Puedes mover el ejecutable a la carpeta que prefieras.
+
+Requiere **Windows con .NET Framework 4.8**. Usa la compilación **x86** también en Windows de 64 bits.
+
 ## Qué ha mejorado en este fork (2.5.0)
 
 - **Interfaz oscura con Krypton Toolkit.** Ventana redimensionable, tarjetas redondeadas, acentos lavanda y desplegables con flechas discretas. Los interruptores ocupan una sola fila para dejar más espacio al editor.
@@ -15,14 +25,6 @@ Ajusta automáticamente la saturación de Windows al jugar a Counter-Strike 2 u 
 - **Guardado más fiable.** Los ajustes del escritorio se guardan automáticamente. Los perfiles se escriben en un XML temporal y el archivo anterior solo se sustituye cuando el nuevo está completo. La interfaz muestra un aviso si falla el guardado.
 - **Detección de GPU.** Windows indica qué adaptadores AMD y NVIDIA están presentes y operativos antes de que vibranceGUI compruebe sus controladores. Si ambos fabricantes están disponibles, la aplicación avisa de que esta versión solo puede usar uno a la vez.
 - **Descarga en un solo EXE.** GitHub Actions compila para Windows x86 con .NET Framework 4.8, verifica el SHA-256 de la DLL de NVIDIA e incrusta las dependencias gestionadas con Costura.
-
-## Descargar y abrir
-
-1. Abre [Actions → Windows build](https://github.com/rekznoz/vibranceGUI/actions/workflows/build.yml).
-2. Entra en una ejecución completada correctamente y descarga **vibranceGUI-SingleExe-x86** desde **Artifacts**.
-3. Extrae **vibrance.GUI.exe** y muévelo a donde quieras, incluido el escritorio. Requiere .NET Framework 4.8 en Windows.
-
-Si tienes acceso de escritura, puedes compilar desde **Run workflow**. Desmarca **Build the single executable** para generar el ZIP de respaldo **vibranceGUI-Release-x86**. Si usas ese ZIP, extrae todo y mantén `lib` y `vibrance.GUI.exe.config` junto al ejecutable.
 
 ## Configurar un perfil de CS2
 
@@ -41,6 +43,8 @@ msbuild vibrance.GUI.sln /restore /m /p:Configuration=Release /p:Platform=x86 /p
 ```
 
 El EXE único está en `vibrance.GUI\bin\x86\SingleExe\vibrance.GUI.exe`. Para compilar con las DLL separadas, omite `/p:SingleExe=true`. En ese caso, el resultado está en `vibrance.GUI\bin\x86\Release\`. La DLL de NVIDIA requiere un proceso x86, también en Windows de 64 bits.
+
+También puedes compilar desde **Run workflow** si tienes acceso de escritura. Desmarca **Build the single executable** para generar **vibranceGUI-Release-x86**. Si usas ese paquete, extrae todo y mantén `lib` y `vibrance.GUI.exe.config` junto al ejecutable. [Actions → Windows build](https://github.com/rekznoz/vibranceGUI/actions/workflows/build.yml)
 
 ### Procedencia de la DLL de NVIDIA
 
