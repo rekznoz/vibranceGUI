@@ -12,6 +12,8 @@ namespace vibrance.GUI.AMD
 {
     public class AmdDynamicVibranceProxy : IVibranceProxy
     {
+        private const int NeutralSaturation = 100;
+        private bool _vibranceEnabled = true;
         private readonly IAmdAdapter _amdAdapter;
         private List<ApplicationSetting> _applicationSettings;
         private readonly Dictionary<string, List<ResolutionModeWrapper>> _supportedResolutionModes;
@@ -63,6 +65,14 @@ namespace vibrance.GUI.AMD
         public void SetShouldRun(bool shouldRun)
         {
             _vibranceInfo.shouldRun = shouldRun;
+        }
+
+        public void SetVibranceEnabled(bool enabled)
+        {
+            _vibranceEnabled = enabled;
+            ApplyDesktopVibrance();
+            if (enabled)
+                _hook.RefreshForegroundWindow();
         }
 
         public void SetNeverSwitchResolution(bool neverChangeResolution)
@@ -129,6 +139,9 @@ namespace vibrance.GUI.AMD
                 ? profile.ResolutionSettings : null;
             ResolutionHelper.ApplyProfileResolution(screen.DeviceName, resolution, _supportedResolutionModes);
 
+            if (!_vibranceEnabled)
+                return;
+
             if (_vibranceInfo.affectPrimaryMonitorOnly)
             {
                 if (_gameChangedAllDisplays || (_gameDisplay != null && _gameDisplay != screen.DeviceName))
@@ -145,7 +158,7 @@ namespace vibrance.GUI.AMD
 
         private void ApplyDesktopVibrance()
         {
-            int level = _vibranceInfo.userVibranceSettingDefault;
+            int level = _vibranceEnabled ? _vibranceInfo.userVibranceSettingDefault : NeutralSaturation;
             if (!_vibranceInfo.affectPrimaryMonitorOnly || _gameChangedAllDisplays)
             {
                 _amdAdapter.SetSaturationOnAllDisplays(level);
