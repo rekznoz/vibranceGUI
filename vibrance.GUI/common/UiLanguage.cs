@@ -87,8 +87,9 @@ namespace vibrance.GUI.common
         internal static string Translate(string english)
         {
             string[] translation;
-            return SelectedIndex != 0 && Translations.TryGetValue(english, out translation)
-                ? translation[SelectedIndex - 1] : english;
+            int index = SelectedIndex;
+            return index != 0 && Translations.TryGetValue(english, out translation)
+                ? translation[index - 1] : english;
         }
     }
 }
