@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Media;
 using System.Runtime.InteropServices;
@@ -219,7 +220,7 @@ namespace vibrance.GUI.common
         [DllImport("user32.dll")]
         internal static extern IntPtr GetForegroundWindow();
 
-        internal static bool HasForegroundProfile(System.Collections.Generic.List<ApplicationSetting> profiles)
+        internal static bool HasForegroundProfile(List<ApplicationSetting> profiles)
         {
             if (profiles.Count == 0)
                 return false;
